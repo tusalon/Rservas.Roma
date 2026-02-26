@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - LAG.barberia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://resource.trickle.so/vendor_lib/unpkg/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-900 to-amber-900 min-h-screen flex items-center justify-center p-4">
+    
+    <!-- 🔥 REDIRECCIÓN AUTOMÁTICA SI YA HAY SESIÓN -->
+    <script>
+        (function() {
+            const isAdmin = localStorage.getItem('adminAuth') === 'true';
+            const barberoAuth = localStorage.getItem('barberoAuth');
+            
+            if (isAdmin || barberoAuth) {
+                console.log('🔐 Sesión activa detectada, redirigiendo a admin.html');
+                window.location.replace('admin.html');
+            }
+        })();
+    </script>
+
+    <div class="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-8 animate-fade-in border border-amber-700">
+        <div class="text-center mb-8">
+            <!-- LOGO COMO ICONO -->
+            <div class="flex justify-center mb-4">
+                <div class="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl shadow-xl flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                    <i class="icon-scissors text-4xl text-white"></i>
+                </div>
+            </div>
+            
+            <!-- Eslogan -->
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-600/30 backdrop-blur-sm border border-amber-500/50 text-amber-300 text-sm font-medium mb-2">
+                <i class="icon-star text-xs"></i>
+                <span>Nivel que se nota</span>
+            </div>
+            
+            <h1 class="text-3xl font-bold text-white">LAG.barberia</h1>
+            <p class="text-amber-400">Acceso al Panel</p>
+        </div>
+        
+        <div id="mensaje" class="mb-4 text-sm text-center hidden"></div>
+        
+        <form id="loginForm" class="space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-2">Usuario / Teléfono</label>
+                <input type="text" id="username" required
+                       class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                       placeholder="LAG.barberia o 53357234">
+                <p class="text-xs text-gray-400 mt-1">Dueño: LAG.barberia | Barberos: usá tu teléfono</p>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-amber-400 mb-2">Contraseña</label>
+                <input type="password" id="password" required
+                       class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                       placeholder="••••••••">
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-3 rounded-lg font-semibold hover:from-amber-700 hover:to-amber-800 transition transform hover:scale-105">
+                Entrar
+            </button>
+        </form>
+        
+        <div id="errorMsg" class="mt-4 text-red-500 text-sm text-center hidden"></div>
+        
+        <!-- Leyenda sin emojis -->
+        <div class="mt-6 text-center text-xs text-gray-400">
+            <p><span class="font-bold text-amber-400">Dueño:</span> usuario <strong>LAG.barberia</strong> | contraseña <strong></strong></p>
+            <p class="mt-1"><span class="font-bold text-amber-400">Barberos:</span> usá tu teléfono</p>
+        </div>
+    </div>
+
+    <!-- Scripts con rutas relativas -->
+    <script type="text/javascript" src="utils/supabase-config.js"></script>
+    <script type="text/javascript" src="utils/storage.js"></script>
+
+    <script type="text/javascript">
+        console.log('🔍 VERIFICACIÓN INICIAL LOGIN:');
+        console.log('  window.location.pathname:', window.location.pathname);
+        console.log('  window.location.origin:', window.location.origin);
+        console.log('  SUPABASE_URL:', window.SUPABASE_URL);
+        console.log('  SUPABASE_ANON_KEY:', window.SUPABASE_ANON_KEY ? '✓ Definida' : '✗ Undefined');
+        
+        if (!window.SUPABASE_URL) {
+            console.error('❌ ERROR CRÍTICO: SUPABASE_URL no está definida en login');
+        } else {
+            console.log('✅ Supabase configurado correctamente en login');
+        }
+    </script>
+
+    <script type="text/javascript" src="utils/api.js"></script>
+    <script type="text/javascript" src="utils/timeLogic.js"></script>
+    <script type="text/javascript" src="utils/auth-clients.js"></script>
+    <script type="text/javascript" src="utils/auth-barberos.js"></script>
+    <script type="text/javascript" src="utils/config.js"></script>
+    <script type="text/javascript" src="utils/servicios.js"></script>
+    <script type="text/javascript" src="utils/barberos.js"></script>
+
+    <script type="text/javascript">
+        console.log('🔍 VERIFICACIÓN DE CARGA LOGIN:');
+        console.log(' ✅ supabase-config:', window.SUPABASE_URL ? 'OK' : 'FALTA');
+        console.log(' ✅ SUPABASE_URL:', window.SUPABASE_URL);
+        console.log(' ✅ auth-barberos:', typeof window.verificarBarberoPorTelefono);
+        console.log(' ✅ auth-clientes:', typeof window.verificarAccesoCliente);
+        console.log(' ✅ loginBarbero:', typeof window.loginBarbero);
+        console.log(' ✅ salonConfig:', typeof window.salonConfig);
+        console.log(' ✅ salonServicios:', typeof window.salonServicios);
+        console.log(' ✅ salonBarberos:', typeof window.salonBarberos);
+    </script>
+
+    <script>
+        // Credenciales del dueño
+        const ADMIN_USERNAME = 'LAG.barberia';
+        const ADMIN_PASSWORD = 'lag2026';
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            const mensaje = document.getElementById('mensaje');
+            
+            errorMsg.classList.add('hidden');
+            mensaje.classList.add('hidden');
+            
+            mensaje.textContent = 'Verificando...';
+            mensaje.classList.remove('hidden');
+            mensaje.classList.add('text-amber-400', 'bg-gray-700', 'p-2', 'rounded-lg');
+            
+            try {
+                console.log('🔐 Intentando login con:', { username, password: '***' });
+                console.log('🔐 SUPABASE_URL en login:', window.SUPABASE_URL);
+                
+                if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                    console.log('✅ Login exitoso como dueño');
+                    
+                    localStorage.setItem('adminAuth', 'true');
+                    localStorage.setItem('adminUser', username);
+                    localStorage.setItem('adminLoginTime', Date.now());
+                    localStorage.setItem('userRole', 'admin');
+                    
+                    localStorage.removeItem('barberoAuth');
+                    
+                    mensaje.classList.add('hidden');
+                    window.location.href = 'admin.html';
+                    return;
+                }
+                
+                if (/^\d+$/.test(username)) {
+                    console.log('🔍 Intentando login como barbero:', username);
+                    
+                    if (typeof window.loginBarbero !== 'function') {
+                        console.error('❌ loginBarbero no está disponible');
+                        errorMsg.textContent = 'Error: Sistema de autenticación no disponible';
+                        errorMsg.classList.remove('hidden');
+                        mensaje.classList.add('hidden');
+                        return;
+                    }
+                    
+                    const barbero = await window.loginBarbero(username, password);
+                    
+                    if (barbero) {
+                        console.log('✅ Login exitoso como barbero:', barbero.nombre);
+                        
+                        localStorage.setItem('barberoAuth', JSON.stringify({
+                            id: barbero.id,
+                            nombre: barbero.nombre,
+                            telefono: barbero.telefono,
+                            nivel: barbero.nivel || 1
+                        }));
+                        localStorage.setItem('userRole', 'barbero');
+                        
+                        localStorage.removeItem('adminAuth');
+                        localStorage.removeItem('adminUser');
+                        
+                        mensaje.classList.add('hidden');
+                        window.location.href = 'admin.html';
+                        return;
+                    } else {
+                        console.log('❌ Login falló - credenciales incorrectas');
+                    }
+                }
+                
+                errorMsg.textContent = 'Usuario o contraseña incorrectos';
+                errorMsg.classList.remove('hidden');
+                mensaje.classList.add('hidden');
+                
+            } catch (error) {
+                console.error('❌ Error en login:', error);
+                errorMsg.textContent = 'Error al conectar. Intentá de nuevo.';
+                errorMsg.classList.remove('hidden');
+                mensaje.classList.add('hidden');
+            }
+        });
+
+        setTimeout(() => {
+            console.log('🔍 VERIFICACIÓN FINAL LOGIN:');
+            console.log('  SUPABASE_URL:', window.SUPABASE_URL);
+            console.log('  loginBarbero:', typeof window.loginBarbero);
+            console.log('  verificarBarberoPorTelefono:', typeof window.verificarBarberoPorTelefono);
+            
+            if (typeof window.loginBarbero === 'function') {
+                console.log('✅ loginBarbero está disponible');
+            } else {
+                console.error('❌ loginBarbero NO está disponible');
+            }
+            
+            if (window.SUPABASE_URL) {
+                console.log('✅ SUPABASE_URL configurada correctamente');
+            } else {
+                console.error('❌ SUPABASE_URL sigue siendo undefined');
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
