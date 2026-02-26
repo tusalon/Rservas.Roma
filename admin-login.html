@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login - LAG.barberia</title>
+    <title>Admin Login - Rservas.Roma</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://resource.trickle.so/vendor_lib/unpkg/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
     <style>
@@ -18,7 +18,7 @@
 </head>
 <body class="bg-gradient-to-br from-gray-900 to-amber-900 min-h-screen flex items-center justify-center p-4">
     
-    <!-- 🔥 REDIRECCIÓN AUTOMÁTICA SI YA HAY SESIÓN -->
+    <!-- Redirección automática si ya hay sesión -->
     <script>
         (function() {
             const isAdmin = localStorage.getItem('adminAuth') === 'true';
@@ -33,7 +33,7 @@
 
     <div class="bg-gray-800 rounded-2xl shadow-xl max-w-md w-full p-8 animate-fade-in border border-amber-700">
         <div class="text-center mb-8">
-            <!-- LOGO COMO ICONO -->
+            <!-- LOGO -->
             <div class="flex justify-center mb-4">
                 <div class="w-20 h-20 bg-gradient-to-br from-amber-500 to-amber-700 rounded-2xl shadow-xl flex items-center justify-center transform rotate-3 hover:rotate-0 transition-transform duration-300">
                     <i class="icon-scissors text-4xl text-white"></i>
@@ -46,7 +46,7 @@
                 <span>Nivel que se nota</span>
             </div>
             
-            <h1 class="text-3xl font-bold text-white">LAG.barberia</h1>
+            <h1 class="text-3xl font-bold text-white">Rservas.Roma</h1>
             <p class="text-amber-400">Acceso al Panel</p>
         </div>
         
@@ -76,16 +76,16 @@
         
         <div id="errorMsg" class="mt-4 text-red-500 text-sm text-center hidden"></div>
         
-        <!-- Leyenda sin emojis -->
+        <!-- Leyenda -->
         <div class="mt-6 text-center text-xs text-gray-400">
-            <p><span class="font-bold text-amber-400">Dueño:</span> usuario <strong>LAG.barberia</strong> | contraseña <strong></strong></p>
+            <p><span class="font-bold text-amber-400">Dueño:</span> usuario <strong>LAG.barberia</strong> | contraseña <strong>lag2026</strong></p>
             <p class="mt-1"><span class="font-bold text-amber-400">Barberos:</span> usá tu teléfono</p>
         </div>
     </div>
 
-    <!-- Scripts con rutas relativas -->
-    <script type="text/javascript" src="utils/supabase-config.js"></script>
-    <script type="text/javascript" src="utils/storage.js"></script>
+    <!-- Scripts con rutas relativas y timestamp -->
+    <script type="text/javascript" src="utils/supabase-config.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/storage.js?v=202402261530"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN INICIAL LOGIN:');
@@ -101,13 +101,13 @@
         }
     </script>
 
-    <script type="text/javascript" src="utils/api.js"></script>
-    <script type="text/javascript" src="utils/timeLogic.js"></script>
-    <script type="text/javascript" src="utils/auth-clients.js"></script>
-    <script type="text/javascript" src="utils/auth-barberos.js"></script>
-    <script type="text/javascript" src="utils/config.js"></script>
-    <script type="text/javascript" src="utils/servicios.js"></script>
-    <script type="text/javascript" src="utils/barberos.js"></script>
+    <script type="text/javascript" src="utils/api.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/timeLogic.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/auth-clients.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/auth-barberos.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/config.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/servicios.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/barberos.js?v=202402261530"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN DE CARGA LOGIN:');
@@ -122,7 +122,6 @@
     </script>
 
     <script>
-        // Credenciales del dueño
         const ADMIN_USERNAME = 'LAG.barberia';
         const ADMIN_PASSWORD = 'lag2026';
         
@@ -206,25 +205,6 @@
                 mensaje.classList.add('hidden');
             }
         });
-
-        setTimeout(() => {
-            console.log('🔍 VERIFICACIÓN FINAL LOGIN:');
-            console.log('  SUPABASE_URL:', window.SUPABASE_URL);
-            console.log('  loginBarbero:', typeof window.loginBarbero);
-            console.log('  verificarBarberoPorTelefono:', typeof window.verificarBarberoPorTelefono);
-            
-            if (typeof window.loginBarbero === 'function') {
-                console.log('✅ loginBarbero está disponible');
-            } else {
-                console.error('❌ loginBarbero NO está disponible');
-            }
-            
-            if (window.SUPABASE_URL) {
-                console.log('✅ SUPABASE_URL configurada correctamente');
-            } else {
-                console.error('❌ SUPABASE_URL sigue siendo undefined');
-            }
-        }, 2000);
     </script>
 </body>
 </html>

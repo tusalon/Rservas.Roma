@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LAG.barberia - Reserva de Turnos</title>
-    <meta name="description" content="Reservá tu turno en LAG.barberia fácil y rápido">
+    <title>Rservas.Roma - Reserva de Turnos</title>
+    <meta name="description" content="Reservá tu turno fácil y rápido">
     
-    <!-- PWA - rutas con /LAG-barberia/ -->
-    <link rel="manifest" href="/LAG-barberia/manifest.json">
+    <!-- PWA - rutas con /Rservas.Roma/ -->
+    <link rel="manifest" href="/Rservas.Roma/manifest.json">
     <meta name="theme-color" content="#c49b63">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="LAG.barberia">
-    <link rel="apple-touch-icon" href="/LAG-barberia/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="192x192" href="/LAG-barberia/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="512x512" href="/LAG-barberia/icons/icon-512x512.png">
+    <meta name="apple-mobile-web-app-title" content="Rservas.Roma">
+    <link rel="apple-touch-icon" href="/Rservas.Roma/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/Rservas.Roma/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/Rservas.Roma/icons/icon-512x512.png">
     
     <script src="https://resource.trickle.so/vendor_lib/unpkg/react@18/umd/react.production.min.js"></script>
     <script src="https://resource.trickle.so/vendor_lib/unpkg/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -86,9 +86,9 @@
 <body>
     <div id="root"></div>
 
-    <!-- Scripts con rutas ABSOLUTAS que incluyen /LAG-barberia/ -->
-    <script type="text/javascript" src="/LAG-barberia/utils/supabase-config.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/storage.js"></script>
+    <!-- Scripts con rutas ABSOLUTAS y timestamp para forzar actualización -->
+    <script type="text/javascript" src="/Rservas.Roma/utils/supabase-config.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/storage.js?v=202402261530"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN INICIAL:');
@@ -98,18 +98,18 @@
         if (!window.SUPABASE_URL) {
             console.error('❌ ERROR CRÍTICO: SUPABASE_URL no está definida');
         } else {
-            console.log('✅ LAG.barberia conectado a Supabase correctamente');
+            console.log('✅ Rservas.Roma conectado a Supabase correctamente');
         }
     </script>
 
-    <script type="text/javascript" src="/LAG-barberia/utils/api.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/timeLogic.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/auth-clients.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/auth-barberos.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/config.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/servicios.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/barberos.js"></script>
-    <script type="text/javascript" src="/LAG-barberia/utils/whatsapp-helper.js"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/api.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/timeLogic.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/auth-clients.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/auth-barberos.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/config.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/servicios.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/barberos.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/whatsapp-helper.js?v=202402261530"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN DE CARGA:');
@@ -122,22 +122,22 @@
         console.log(' ✅ storage:', typeof window.subirImagenServicio);
     </script>
 
-    <script type="text/babel" src="/LAG-barberia/components/Header.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/ServiceSelection.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/WorkerSelector.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/Calendar.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/TimeSlots.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/BookingForm.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/Confirmation.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/WelcomeScreen.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/WhatsAppButton.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/ClientAuthScreen.js"></script>
-    <script type="text/babel" src="/LAG-barberia/components/MyBookings.js"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/Header.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/ServiceSelection.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/WorkerSelector.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/Calendar.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/TimeSlots.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/BookingForm.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/Confirmation.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/WelcomeScreen.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/WhatsAppButton.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/ClientAuthScreen.js?v=202402261530"></script>
+    <script type="text/babel" src="/Rservas.Roma/components/MyBookings.js?v=202402261530"></script>
     
     <!-- App de clientes -->
-    <script type="text/babel" src="/LAG-barberia/client-app.js"></script>
+    <script type="text/babel" src="/Rservas.Roma/client-app.js?v=202402261530"></script>
 
-    <!-- 🔥 SISTEMA DE ACTUALIZACIONES ROBUSTO -->
+    <!-- Sistema de actualizaciones robusto -->
     <script>
         // ============================================
         // DETECCIÓN DE NUEVAS VERSIONES
@@ -146,7 +146,6 @@
         let updateNotificationShown = false;
         let updateBanner = null;
 
-        // Función para mostrar el banner de actualización
         function showUpdateNotification() {
             if (updateNotificationShown) return;
             
@@ -158,7 +157,7 @@
                     <div class="banner-icon">✂️</div>
                     <div class="banner-text">
                         <div class="banner-title">¡Nueva versión disponible!</div>
-                        <div class="banner-subtitle">Actualizamos LAG.barberia con mejoras</div>
+                        <div class="banner-subtitle">Actualizamos Rservas.Roma con mejoras</div>
                     </div>
                     <button onclick="updateApp()" class="banner-button">Actualizar ahora</button>
                 </div>
@@ -167,17 +166,14 @@
             updateNotificationShown = true;
         }
 
-        // Función para actualizar la app
         window.updateApp = () => {
             const notification = document.getElementById('update-notification');
             if (notification) notification.remove();
             
             if (swRegistration && swRegistration.waiting) {
-                // Enviar mensaje al service worker para que active la nueva versión
                 swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
             }
             
-            // Mostrar mensaje de recarga
             const reloadMsg = document.createElement('div');
             reloadMsg.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-[10000]';
             reloadMsg.id = 'reload-message';
@@ -190,27 +186,23 @@
             `;
             document.body.appendChild(reloadMsg);
             
-            // Recargar después de 1.5 segundos
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         };
 
-        // Registrar Service Worker con manejo de actualizaciones
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/LAG-barberia/sw.js')
+                navigator.serviceWorker.register('/Rservas.Roma/sw.js')
                     .then(registration => {
                         swRegistration = registration;
                         console.log('✅ Service Worker registrado');
 
-                        // Si hay una versión esperando, notificar
                         if (registration.waiting) {
                             console.log('🔄 Nueva versión detectada al inicio');
                             showUpdateNotification();
                         }
 
-                        // Detectar cuando se encuentra una nueva versión
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
                             console.log('🔄 Nueva versión detectada');
@@ -227,21 +219,19 @@
                         console.log('❌ Error al registrar Service Worker:', error);
                     });
 
-                // Escuchar cambios en el service worker activo
                 navigator.serviceWorker.addEventListener('controllerchange', () => {
                     console.log('🔄 Service Worker cambiado, recargando...');
                     window.location.reload();
                 });
             });
-        }
 
-        // Verificar actualizaciones cada 30 minutos
-        setInterval(() => {
-            if (swRegistration) {
-                console.log('🔄 Verificando actualizaciones...');
-                swRegistration.update();
-            }
-        }, 30 * 60 * 1000); // 30 minutos
+            setInterval(() => {
+                if (swRegistration) {
+                    console.log('🔄 Verificando actualizaciones...');
+                    swRegistration.update();
+                }
+            }, 30 * 60 * 1000);
+        }
 
         // ============================================
         // INSTALACIÓN DE LA APP (PWA)
@@ -254,32 +244,31 @@
             console.log('📲 App lista para instalar');
             e.preventDefault();
             deferredPrompt = e;
-            installContainer.classList.remove('hidden');
+            if (installContainer) installContainer.classList.remove('hidden');
         });
 
-        installButton.addEventListener('click', async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`📲 Resultado de instalación: ${outcome}`);
-            deferredPrompt = null;
-            installContainer.classList.add('hidden');
-        });
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                console.log(`📲 Resultado de instalación: ${outcome}`);
+                deferredPrompt = null;
+                if (installContainer) installContainer.classList.add('hidden');
+            });
+        }
 
         window.addEventListener('appinstalled', (e) => {
             console.log('✅ App instalada exitosamente');
-            installContainer.classList.add('hidden');
+            if (installContainer) installContainer.classList.add('hidden');
             if ('Notification' in window && Notification.permission === 'granted') {
                 new Notification('✅ App instalada', { 
-                    body: 'LAG.barberia ahora está en tu dispositivo',
-                    icon: '/LAG-barberia/icons/icon-192x192.png'
+                    body: 'Rservas.Roma ahora está en tu dispositivo',
+                    icon: '/Rservas.Roma/icons/icon-192x192.png'
                 });
             }
         });
 
-        // ============================================
-        // NOTIFICACIONES DEL NAVEGADOR
-        // ============================================
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
