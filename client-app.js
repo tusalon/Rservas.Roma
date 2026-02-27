@@ -1,7 +1,13 @@
 // client-app.js - VERSIÓN CORREGIDA PARA RSERVAS.ROMA
 // ============================================
-// SOLO USA PROFESIONALES (NO BARBEROS)
+// SOPORTA MÚLTIPLES NEGOCIOS VÍA PARÁMETRO EN URL
 // ============================================
+
+// Leer parámetro ?negocio= de la URL
+const obtenerSlugDeURL = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get('negocio');
+};
 
 function ClientApp() {
     const [step, setStep] = React.useState('auth');
@@ -15,37 +21,65 @@ function ClientApp() {
     const [history, setHistory] = React.useState(['auth']);
 
     // ============================================
-    // DETECTAR SESIÓN AL INICIAR - CORREGIDO
+    // DETECTAR NEGOCIO DESDE URL Y SESIÓN AL INICIAR
     // ============================================
     React.useEffect(() => {
-        const adminAuth = localStorage.getItem('adminAuth') === 'true';
-        // ✅ CORREGIDO: profesionalAuth en lugar de barberoAuth
-        const profesionalAuth = localStorage.getItem('profesionalAuth');
+        const iniciarApp = async () => {
+            // 1. Verificar si hay slug en URL
+            const slug = obtenerSlugDeURL();
+            
+            if (slug) {
+                console.log('🔍 Slug detectado en URL:', slug);
+                localStorage.setItem('negocio_slug', slug);
+                
+                // Buscar el negocio por slug
+                const { data: negocio, error } = await window.supabase
+                    .from('negocios')
+                    .select('id, nombre')
+                    .eq('slug', slug)
+                    .single();
+                
+                if (negocio) {
+                    localStorage.setItem('negocio_id', negocio.id);
+                    localStorage.setItem('negocio_nombre', negocio.nombre);
+                    console.log('🏢 Negocio cargado:', negocio.nombre);
+                } else {
+                    console.error('❌ Negocio no encontrado para slug:', slug);
+                }
+            } else {
+                console.log('ℹ️ No hay slug en URL, usando negocio por defecto');
+            }
+
+            // 2. Verificar autenticación (código existente)
+            const adminAuth = localStorage.getItem('adminAuth') === 'true';
+            const profesionalAuth = localStorage.getItem('profesionalAuth');
+            
+            if (adminAuth) {
+                setUserRol('admin');
+            } else if (profesionalAuth) {
+                setUserRol('profesional');
+                try {
+                    const profesional = JSON.parse(profesionalAuth);
+                    setCliente({
+                        nombre: profesional.nombre,
+                        whatsapp: profesional.telefono
+                    });
+                } catch (e) {}
+            }
+            
+            const savedCliente = localStorage.getItem('clienteAuth');
+            if (savedCliente && !adminAuth && !profesionalAuth) {
+                try {
+                    const clienteData = JSON.parse(savedCliente);
+                    setCliente(clienteData);
+                    setUserRol('cliente');
+                    setStep('welcome');
+                    setHistory(['auth', 'welcome']);
+                } catch (e) {}
+            }
+        };
         
-        if (adminAuth) {
-            setUserRol('admin');
-        } else if (profesionalAuth) {
-            // ✅ CORREGIDO: profesional en lugar de barbero
-            setUserRol('profesional');
-            try {
-                const profesional = JSON.parse(profesionalAuth);
-                setCliente({
-                    nombre: profesional.nombre,
-                    whatsapp: profesional.telefono
-                });
-            } catch (e) {}
-        }
-        
-        const savedCliente = localStorage.getItem('clienteAuth');
-        if (savedCliente && !adminAuth && !profesionalAuth) {
-            try {
-                const clienteData = JSON.parse(savedCliente);
-                setCliente(clienteData);
-                setUserRol('cliente');
-                setStep('welcome');
-                setHistory(['auth', 'welcome']);
-            } catch (e) {}
-        }
+        iniciarApp();
     }, []);
 
     // ============================================

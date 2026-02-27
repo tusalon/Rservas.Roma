@@ -271,5 +271,18 @@
             <span class="text-xs bg-pink-500 px-2 py-1 rounded-full animate-pulse">NUEVO</span>
         </button>
     </div>
+    <!-- Script para manejo de negocio -->
+<script>
+    (function() {
+        // Si no hay parámetro negocio en la URL, mostrar selector
+        const urlParams = new URLSearchParams(window.location.search);
+        const negocioSlug = urlParams.get('negocio');
+        
+        if (!negocioSlug) {
+            // Mostrar selector de negocio (opcional)
+            console.log('ℹ️ No hay negocio seleccionado');
+        }
+    })();
+</script>
 </body>
 </html>
