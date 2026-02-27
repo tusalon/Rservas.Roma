@@ -15,6 +15,7 @@ function SuperAdminApp() {
     const [mostrarDetalle, setMostrarDetalle] = React.useState(false);
     const [filtro, setFiltro] = React.useState('todos');
     const [verificado, setVerificado] = React.useState(false);
+    const [version, setVersion] = React.useState(0); // 🔥 Para forzar actualización
 
     React.useEffect(() => {
         verificarSuperAdmin();
@@ -70,8 +71,8 @@ function SuperAdminApp() {
                 index === self.findIndex(t => t.id === item.id)
             );
             
-            // 🔥 FORZAR NUEVO ARRAY
             setNegocios([...unicos]);
+            setVersion(v => v + 1); // 🔥 FORZAR ACTUALIZACIÓN
             
             console.log('✅ Negocios cargados:', unicos);
         } catch (error) {
@@ -191,9 +192,9 @@ function SuperAdminApp() {
                         </div>
                     ) : (
                         <div className="space-y-3">
-                            {negociosFiltrados.map(negocio => (
+                            {negociosFiltrados.map((negocio, index) => (
                                 <div
-                                    key={negocio.id}
+                                    key={`${negocio.id}-${version}-${index}`} // 🔥 KEY QUE CAMBIA CON CADA ACTUALIZACIÓN
                                     className="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
                                     onClick={() => verDetalle(negocio)}
                                 >
