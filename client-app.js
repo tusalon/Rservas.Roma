@@ -1,4 +1,7 @@
-// client-app.js - Aplicación de clientes con flujo completo y scroll automático
+// client-app.js - VERSIÓN CORREGIDA PARA RSERVAS.ROMA
+// ============================================
+// SOLO USA PROFESIONALES (NO BARBEROS)
+// ============================================
 
 function ClientApp() {
     const [step, setStep] = React.useState('auth');
@@ -12,27 +15,29 @@ function ClientApp() {
     const [history, setHistory] = React.useState(['auth']);
 
     // ============================================
-    // DETECTAR SESIÓN AL INICIAR
+    // DETECTAR SESIÓN AL INICIAR - CORREGIDO
     // ============================================
     React.useEffect(() => {
         const adminAuth = localStorage.getItem('adminAuth') === 'true';
-        const barberoAuth = localStorage.getItem('barberoAuth');
+        // ✅ CORREGIDO: profesionalAuth en lugar de barberoAuth
+        const profesionalAuth = localStorage.getItem('profesionalAuth');
         
         if (adminAuth) {
             setUserRol('admin');
-        } else if (barberoAuth) {
-            setUserRol('barbero');
+        } else if (profesionalAuth) {
+            // ✅ CORREGIDO: profesional en lugar de barbero
+            setUserRol('profesional');
             try {
-                const barbero = JSON.parse(barberoAuth);
+                const profesional = JSON.parse(profesionalAuth);
                 setCliente({
-                    nombre: barbero.nombre,
-                    whatsapp: barbero.telefono
+                    nombre: profesional.nombre,
+                    whatsapp: profesional.telefono
                 });
             } catch (e) {}
         }
         
         const savedCliente = localStorage.getItem('clienteAuth');
-        if (savedCliente && !adminAuth && !barberoAuth) {
+        if (savedCliente && !adminAuth && !profesionalAuth) {
             try {
                 const clienteData = JSON.parse(savedCliente);
                 setCliente(clienteData);
@@ -209,7 +214,7 @@ function ClientApp() {
                                 selectedService={selectedService}
                             />
                             
-                            {/* SECCIÓN 2: BARBEROS (con id para scroll) */}
+                            {/* SECCIÓN 2: PROFESIONALES (con id para scroll) */}
                             {selectedService && (
                                 <div id="worker-section">
                                     <WorkerSelector 
