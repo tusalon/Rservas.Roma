@@ -43,6 +43,7 @@ function SuperAdminApp() {
     const cargarNegocios = async () => {
         setCargando(true);
         try {
+            console.log('🔄 Cargando negocios...');
             const { data, error } = await window.supabase
                 .from('vista_negocios_admin')
                 .select('*')
@@ -56,6 +57,7 @@ function SuperAdminApp() {
             );
             
             setNegocios(unicos);
+            console.log('✅ Negocios cargados:', unicos.length);
         } catch (error) {
             console.error('Error cargando negocios:', error);
             alert('Error al cargar los negocios: ' + error.message);
@@ -63,6 +65,9 @@ function SuperAdminApp() {
             setCargando(false);
         }
     };
+
+    // Exponer la función globalmente para pruebas
+    window.cargarNegocios = cargarNegocios;
 
     const negociosFiltrados = negocios.filter(neg => {
         if (filtro === 'todos') return true;
@@ -73,9 +78,14 @@ function SuperAdminApp() {
     });
 
     const verDetalle = (negocio) => {
-        console.log('🔍 Ver detalle de:', negocio); // ✅ Debug
+        console.log('🔍 Ver detalle de:', negocio);
         setNegocioSeleccionado(negocio);
         setMostrarDetalle(true);
+    };
+
+    const handleActualizar = () => {
+        console.log('🔄 Actualizando lista después de cambio...');
+        cargarNegocios();
     };
 
     if (!verificado) {
@@ -255,7 +265,7 @@ function SuperAdminApp() {
                 <DetalleNegocio
                     negocio={negocioSeleccionado}
                     onCerrar={() => setMostrarDetalle(false)}
-                    onActualizar={cargarNegocios}
+                    onActualizar={handleActualizar}
                 />
             )}
         </div>
