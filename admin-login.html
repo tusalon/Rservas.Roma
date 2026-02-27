@@ -115,7 +115,11 @@
         console.log(' ✅ salonProfesionales:', typeof window.salonProfesionales);
     </script>
 
-
+    <script>
+        const supabase = window.supabase.createClient(
+            window.SUPABASE_URL,
+            window.SUPABASE_ANON_KEY
+        );
         
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
@@ -130,7 +134,6 @@
             
             mensaje.textContent = 'Verificando...';
             mensaje.classList.remove('hidden');
-            mensaje.classList.add('text-amber-400', 'bg-gray-700', 'p-2', 'rounded-lg');
             
             try {
                 console.log('🔐 Intentando login con Supabase Auth:', email);
