@@ -115,11 +115,7 @@
         console.log(' ✅ salonProfesionales:', typeof window.salonProfesionales);
     </script>
 
-    <script>
-        const supabase = window.supabase.createClient(
-            window.SUPABASE_URL,
-            window.SUPABASE_ANON_KEY
-        );
+
         
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
