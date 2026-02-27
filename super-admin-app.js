@@ -10,6 +10,7 @@ const SUPER_ADMIN_EMAIL = 'rservasroma@gmail.com';
 function SuperAdminApp() {
     const [cargando, setCargando] = React.useState(true);
     const [negocios, setNegocios] = React.useState([]);
+    const [negociosFiltrados, setNegociosFiltrados] = React.useState([]);
     const [negocioSeleccionado, setNegocioSeleccionado] = React.useState(null);
     const [mostrarDetalle, setMostrarDetalle] = React.useState(false);
     const [filtro, setFiltro] = React.useState('todos');
@@ -18,6 +19,19 @@ function SuperAdminApp() {
     React.useEffect(() => {
         verificarSuperAdmin();
     }, []);
+
+    // Actualizar filtros cuando cambien negocios o filtro
+    React.useEffect(() => {
+        const filtrados = negocios.filter(neg => {
+            if (filtro === 'todos') return true;
+            if (filtro === 'activos') return neg.estado_suscripcion === 'activa';
+            if (filtro === 'trial') return neg.estado_suscripcion === 'trial';
+            if (filtro === 'suspendidos') return neg.estado_suscripcion === 'suspendida';
+            return true;
+        });
+        setNegociosFiltrados(filtrados);
+        console.log('📊 Filtrados:', filtrados.length, 'negocios');
+    }, [negocios, filtro]);
 
     const verificarSuperAdmin = async () => {
         try {
@@ -56,9 +70,7 @@ function SuperAdminApp() {
                 index === self.findIndex(t => t.id === item.id)
             );
             
-            // 🔥 FORZAR NUEVO ARRAY para que React actualice
             setNegocios([...unicos]);
-            
             console.log('✅ Negocios cargados:', unicos.length);
         } catch (error) {
             console.error('Error cargando negocios:', error);
@@ -71,16 +83,8 @@ function SuperAdminApp() {
     // Exponer la función globalmente para pruebas
     window.cargarNegocios = cargarNegocios;
 
-    const negociosFiltrados = negocios.filter(neg => {
-        if (filtro === 'todos') return true;
-        if (filtro === 'activos') return neg.estado_suscripcion === 'activa';
-        if (filtro === 'trial') return neg.estado_suscripcion === 'trial';
-        if (filtro === 'suspendidos') return neg.estado_suscripcion === 'suspendida';
-        return true;
-    });
-
     const verDetalle = (negocio) => {
-        console.log('🔍 Ver detalle de:', negocio);
+        console.log('🔍 Ver detalle de:', negocio.nombre);
         setNegocioSeleccionado(negocio);
         setMostrarDetalle(true);
     };
@@ -179,7 +183,7 @@ function SuperAdminApp() {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                     <h2 className="text-lg font-semibold mb-4">📋 Lista de negocios</h2>
                     
-                    {negocios.length === 0 ? (
+                    {negociosFiltrados.length === 0 ? (
                         <div className="text-center py-8">
                             <p className="text-gray-500">No hay negocios para mostrar</p>
                         </div>
