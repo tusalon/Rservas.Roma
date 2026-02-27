@@ -1,20 +1,21 @@
-// sw.js - Service Worker para LAG.barberia (CORREGIDO)
+// sw.js - Service Worker para Rservas.Roma
 
-const CACHE_NAME = 'lag-barberia-v1';
+const CACHE_NAME = 'rservas-roma-v1';
 const urlsToCache = [
-  '/LAG-barberia/',
-  '/LAG-barberia/index.html',
-  '/LAG-barberia/admin.html',
-  '/LAG-barberia/admin-login.html',
-  '/LAG-barberia/manifest.json',
-  '/LAG-barberia/icons/icon-72x72.png',
-  '/LAG-barberia/icons/icon-96x96.png',
-  '/LAG-barberia/icons/icon-128x128.png',
-  '/LAG-barberia/icons/icon-144x144.png',
-  '/LAG-barberia/icons/icon-152x152.png',
-  '/LAG-barberia/icons/icon-192x192.png',
-  '/LAG-barberia/icons/icon-384x384.png',
-  '/LAG-barberia/icons/icon-512x512.png'
+  '/Rservas.Roma/',
+  '/Rservas.Roma/index.html',
+  '/Rservas.Roma/admin.html',
+  '/Rservas.Roma/admin-login.html',
+  '/Rservas.Roma/super-admin.html',
+  '/Rservas.Roma/manifest.json',
+  '/Rservas.Roma/icons/icon-72x72.png',
+  '/Rservas.Roma/icons/icon-96x96.png',
+  '/Rservas.Roma/icons/icon-128x128.png',
+  '/Rservas.Roma/icons/icon-144x144.png',
+  '/Rservas.Roma/icons/icon-152x152.png',
+  '/Rservas.Roma/icons/icon-192x192.png',
+  '/Rservas.Roma/icons/icon-384x384.png',
+  '/Rservas.Roma/icons/icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
@@ -47,9 +48,8 @@ self.addEventListener('activate', event => {
   );
 });
 
-// 🔥 CORREGIDO: Ignorar peticiones que no sean http/https
+// Ignorar peticiones que no sean http/https
 self.addEventListener('fetch', event => {
-  // Ignorar peticiones que no sean http/https (como chrome-extension://)
   if (!event.request.url.startsWith('http')) {
     return;
   }
@@ -59,7 +59,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // 🔥 IGNORAR PETICIONES A NTFY.SH (NOTIFICACIONES)
+  // Ignorar peticiones a ntfy.sh (notificaciones)
   if (event.request.url.includes('ntfy.sh')) {
     return;
   }
@@ -70,7 +70,6 @@ self.addEventListener('fetch', event => {
         const fetchPromise = fetch(event.request)
           .then(networkResponse => {
             if (networkResponse && networkResponse.status === 200) {
-              // Solo cachear métodos GET
               if (event.request.method === 'GET') {
                 const responseToCache = networkResponse.clone();
                 caches.open(CACHE_NAME)
@@ -97,4 +96,4 @@ self.addEventListener('message', event => {
   }
 });
 
-console.log('✅ Service Worker de LAG.barberia configurado');
+console.log('✅ Service Worker de Rservas.Roma configurado');

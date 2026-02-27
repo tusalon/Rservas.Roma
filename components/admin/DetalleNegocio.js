@@ -101,6 +101,65 @@ function DetalleNegocio({ negocio, onCerrar, onActualizar }) {
             setProcesando(false);
         }
     };
+    const [mostrarFormPago, setMostrarFormPago] = React.useState(false);
+const [nuevoPago, setNuevoPago] = React.useState({
+    monto: '',
+    meses: 1,
+    notas: ''
+});
+
+const handleRegistrarPagoManual = async () => {
+    if (!nuevoPago.monto || nuevoPago.monto <= 0) {
+        alert('Ingresá un monto válido');
+        return;
+    }
+    
+    setProcesando(true);
+    try {
+        // 1. Registrar el pago en historial_pagos
+        const { error: pagoError } = await window.supabase
+            .from('historial_pagos')
+            .insert({
+                negocio_id: negocio.id,
+                monto: nuevoPago.monto,
+                plan_pagado: negocio.plan_actual,
+                periodo_inicio: new Date(),
+                periodo_fin: new Date(new Date().setMonth(new Date().getMonth() + nuevoPago.meses)),
+                metodo_pago: 'manual',
+                estado: 'completado',
+                notas: nuevoPago.notas
+            });
+
+        if (pagoError) throw pagoError;
+
+        // 2. Actualizar la suscripción (extender fecha de renovación)
+        const nuevaFechaRenovacion = new Date(negocio.proximo_pago);
+        nuevaFechaRenovacion.setMonth(nuevaFechaRenovacion.getMonth() + nuevoPago.meses);
+
+        const { error: updateError } = await window.supabase
+            .from('suscripciones')
+            .update({ 
+                fecha_renovacion: nuevaFechaRenovacion,
+                fecha_ultimo_pago: new Date(),
+                monto_ultimo_pago: nuevoPago.monto
+            })
+            .eq('negocio_id', negocio.id);
+
+        if (updateError) throw updateError;
+
+        alert(`✅ Pago registrado. Suscripción extendida ${nuevoPago.meses} mes(es)`);
+        setMostrarFormPago(false);
+        setNuevoPago({ monto: '', meses: 1, notas: '' });
+        cargarHistorialPagos();
+        onActualizar();
+        
+    } catch (error) {
+        console.error('Error registrando pago:', error);
+        alert('Error al registrar el pago');
+    } finally {
+        setProcesando(false);
+    }
+};
 
     const getColorEstado = (estado) => {
         switch(estado) {

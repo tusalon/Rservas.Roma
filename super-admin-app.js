@@ -1,4 +1,4 @@
-// super-admin-app.js - VERSIÓN CON MODAL DE DETALLE
+// super-admin-app.js - VERSIÓN CON MODAL DE DETALLE Y RESUMEN DE PAGOS
 
 console.log('🔥 super-admin-app.js CARGADO');
 
@@ -33,7 +33,7 @@ function SuperAdminApp() {
             );
             
             console.log('✅ Negocios cargados:', unicos.length);
-            setNegocios(unicos);
+            setNegocios([...unicos]); // Forzar nuevo array
         } catch (error) {
             console.error('❌ Error:', error);
         } finally {
@@ -54,8 +54,12 @@ function SuperAdminApp() {
         );
     }
 
-    return React.createElement('div', { className: 'p-6 max-w-4xl mx-auto' },
-        React.createElement('h1', { className: 'text-2xl font-bold mb-4' }, '👑 Super Admin'),
+    return React.createElement('div', { className: 'p-6 max-w-7xl mx-auto' },
+        React.createElement('h1', { className: 'text-2xl font-bold mb-4' }, '👑 Super Admin - Rservas.Roma'),
+        
+        // 🔥 RESUMEN DE PAGOS
+        React.createElement(ResumenPagos, null),
+        
         React.createElement('button', {
             onClick: cargarNegocios,
             className: 'bg-pink-600 text-white px-4 py-2 rounded-lg mb-4 hover:bg-pink-700'
