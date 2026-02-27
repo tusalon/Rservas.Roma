@@ -5,7 +5,7 @@ function WelcomeScreen({ onStart, onGoBack, cliente, userRol }) {
 
     React.useEffect(() => {
         const img = new Image();
-        img.src = '/Rservas.Roma/images/salon-belleza-bienvenida.jpg';
+        img.src = 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=2071&auto=format&fit=crop';
         img.onload = () => setImagenCargada(true);
     }, []);
 

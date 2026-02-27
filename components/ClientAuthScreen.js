@@ -17,7 +17,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
     // Cargar imagen de fondo
     React.useEffect(() => {
         const img = new Image();
-        img.src = '/Rservas.Roma/images/salon-belleza.jpg';
+       img.src = 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=2071&auto=format&fit=crop';
         img.onload = () => {
             console.log('✅ Imagen cargada correctamente');
             setImagenCargada(true);
