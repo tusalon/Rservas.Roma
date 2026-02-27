@@ -1,64 +1,53 @@
-// utils/servicios.js - Gestión de servicios para salón de belleza
+// utils/servicios.js - Gestión de servicios por negocio
 
 console.log('💅 servicios.js cargado');
 
-let serviciosCache = [];
-let ultimaActualizacionServicios = 0;
-const CACHE_DURATION_SERVICIOS = 5 * 60 * 1000;
-
-async function cargarServiciosDesdeDB() {
-    try {
-        console.log('🌐 Cargando servicios desde Supabase...');
-        const response = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/servicios?select=*&order=id.asc`,
-            {
-                headers: {
-                    'apikey': window.SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                }
-            }
-        );
-        
-        if (!response.ok) {
-            console.error('Error response:', await response.text());
-            return null;
-        }
-        
-        const data = await response.json();
-        console.log('✅ Servicios cargados desde Supabase:', data);
-        serviciosCache = data;
-        ultimaActualizacionServicios = Date.now();
-        return data;
-    } catch (error) {
-        console.error('Error cargando servicios:', error);
-        return null;
-    }
-}
-
 window.salonServicios = {
+    // Obtener todos los servicios del negocio actual
     getAll: async function(activos = true) {
-        if (Date.now() - ultimaActualizacionServicios < CACHE_DURATION_SERVICIOS && serviciosCache.length > 0) {
-            if (activos) {
-                return serviciosCache.filter(s => s.activo === true);
-            }
-            return [...serviciosCache];
+        const negocioId = localStorage.getItem('negocio_id');
+        
+        if (!negocioId) {
+            console.error('❌ No hay negocio_id en localStorage');
+            return [];
         }
         
-        const datos = await cargarServiciosDesdeDB();
-        if (datos && datos.length > 0) {
-            if (activos) {
-                return datos.filter(s => s.activo === true);
-            }
-            return datos;
-        }
-        
-        return [];
-    },
-    
-    getById: async function(id) {
         try {
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}&select=*`,
+                `${window.SUPABASE_URL}/rest/v1/servicios?negocio_id=eq.${negocioId}&select=*&order=nombre.asc`,
+                {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                    }
+                }
+            );
+            
+            if (!response.ok) {
+                console.error('Error response:', await response.text());
+                return [];
+            }
+            
+            const data = await response.json();
+            
+            if (activos) {
+                return data.filter(s => s.activo === true);
+            }
+            return data;
+            
+        } catch (error) {
+            console.error('Error cargando servicios:', error);
+            return [];
+        }
+    },
+    
+    // Obtener un servicio por ID
+    getById: async function(id) {
+        const negocioId = localStorage.getItem('negocio_id');
+        
+        try {
+            const response = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}&negocio_id=eq.${negocioId}&select=*`,
                 {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
@@ -75,9 +64,17 @@ window.salonServicios = {
         }
     },
     
+    // Crear un nuevo servicio (automáticamente asignado al negocio actual)
     crear: async function(servicio) {
+        const negocioId = localStorage.getItem('negocio_id');
+        
+        if (!negocioId) {
+            alert('Error: No se pudo identificar el negocio');
+            return null;
+        }
+        
         try {
-            console.log('➕ Creando servicio:', servicio);
+            console.log('➕ Creando servicio para negocio:', negocioId);
             const response = await fetch(
                 `${window.SUPABASE_URL}/rest/v1/servicios`,
                 {
@@ -95,7 +92,8 @@ window.salonServicios = {
                         descripcion: servicio.descripcion || '',
                         categoria: servicio.categoria || 'Uñas',
                         activo: true,
-                        imagen: servicio.imagen || null
+                        imagen: servicio.imagen || null,
+                        negocio_id: negocioId
                     })
                 }
             );
@@ -109,12 +107,6 @@ window.salonServicios = {
             const nuevo = await response.json();
             console.log('✅ Servicio creado:', nuevo);
             
-            serviciosCache = await cargarServiciosDesdeDB() || serviciosCache;
-            
-            if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('serviciosActualizados'));
-            }
-            
             return nuevo[0];
         } catch (error) {
             console.error('Error en crear:', error);
@@ -122,21 +114,15 @@ window.salonServicios = {
         }
     },
     
+    // Actualizar un servicio
     actualizar: async function(id, cambios) {
+        const negocioId = localStorage.getItem('negocio_id');
+        
         try {
             console.log('✏️ Actualizando servicio', id, 'con:', cambios);
             
-            const datosActualizar = {};
-            if (cambios.nombre !== undefined) datosActualizar.nombre = cambios.nombre;
-            if (cambios.duracion !== undefined) datosActualizar.duracion = cambios.duracion;
-            if (cambios.precio !== undefined) datosActualizar.precio = cambios.precio;
-            if (cambios.descripcion !== undefined) datosActualizar.descripcion = cambios.descripcion;
-            if (cambios.categoria !== undefined) datosActualizar.categoria = cambios.categoria;
-            if (cambios.activo !== undefined) datosActualizar.activo = cambios.activo;
-            if (cambios.imagen !== undefined) datosActualizar.imagen = cambios.imagen;
-            
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}`,
+                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}&negocio_id=eq.${negocioId}`,
                 {
                     method: 'PATCH',
                     headers: {
@@ -145,7 +131,7 @@ window.salonServicios = {
                         'Content-Type': 'application/json',
                         'Prefer': 'return=representation'
                     },
-                    body: JSON.stringify(datosActualizar)
+                    body: JSON.stringify(cambios)
                 }
             );
             
@@ -158,12 +144,6 @@ window.salonServicios = {
             const actualizado = await response.json();
             console.log('✅ Servicio actualizado:', actualizado);
             
-            serviciosCache = await cargarServiciosDesdeDB() || serviciosCache;
-            
-            if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('serviciosActualizados'));
-            }
-            
             return actualizado[0];
         } catch (error) {
             console.error('Error en actualizar:', error);
@@ -171,11 +151,14 @@ window.salonServicios = {
         }
     },
     
+    // Eliminar un servicio
     eliminar: async function(id) {
+        const negocioId = localStorage.getItem('negocio_id');
+        
         try {
             console.log('🗑️ Eliminando servicio:', id);
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}`,
+                `${window.SUPABASE_URL}/rest/v1/servicios?id=eq.${id}&negocio_id=eq.${negocioId}`,
                 {
                     method: 'DELETE',
                     headers: {
@@ -192,13 +175,6 @@ window.salonServicios = {
             }
             
             console.log('✅ Servicio eliminado');
-            
-            serviciosCache = await cargarServiciosDesdeDB() || serviciosCache;
-            
-            if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('serviciosActualizados'));
-            }
-            
             return true;
         } catch (error) {
             console.error('Error en eliminar:', error);
@@ -207,8 +183,4 @@ window.salonServicios = {
     }
 };
 
-setTimeout(async () => {
-    await window.salonServicios.getAll(false);
-}, 1000);
-
-console.log('✅ salonServicios inicializado');
+console.log('✅ salonServicios inicializado (multi-negocio)');

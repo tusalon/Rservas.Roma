@@ -77,10 +77,10 @@
         <div id="errorMsg" class="mt-4 text-red-500 text-sm text-center hidden"></div>
     </div>
 
-    <!-- Scripts con rutas relativas y timestamp -->
-    <script type="text/javascript" src="utils/supabase-config.js?v=202402261533"></script>
-    <script type="text/javascript" src="utils/config.js?v=202402261534"></script>
-    <script type="text/javascript" src="utils/storage.js?v=202402261530"></script>
+    <!-- Scripts con rutas relativas -->
+    <script type="text/javascript" src="utils/supabase-config.js"></script>
+    <script type="text/javascript" src="utils/config.js"></script>
+    <script type="text/javascript" src="utils/storage.js"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN INICIAL LOGIN:');
@@ -96,12 +96,12 @@
         }
     </script>
 
-    <script type="text/javascript" src="utils/api.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/timeLogic.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/auth-clients.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/auth-barberos.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/servicios.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/profesionales.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/api.js"></script>
+    <script type="text/javascript" src="utils/timeLogic.js"></script>
+    <script type="text/javascript" src="utils/auth-clients.js"></script>
+    <script type="text/javascript" src="utils/auth-barberos.js"></script>
+    <script type="text/javascript" src="utils/servicios.js"></script>
+    <script type="text/javascript" src="utils/profesionales.js"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN DE CARGA LOGIN:');
@@ -116,7 +116,7 @@
     </script>
 
     <script>
-        window.supabase = window.supabase.createClient(
+        const supabase = window.supabase.createClient(
             window.SUPABASE_URL,
             window.SUPABASE_ANON_KEY
         );
@@ -146,6 +146,20 @@
                 if (error) throw error;
 
                 console.log('✅ Login exitoso:', data);
+                
+                // 🔥 OBTENER EL NEGOCIO_ID DEL USUARIO
+                const { data: negocio, error: negocioError } = await supabase
+                    .from('negocios')
+                    .select('id')
+                    .eq('email', email)
+                    .single();
+                
+                if (negocioError) {
+                    console.warn('⚠️ No se encontró negocio para este email');
+                } else {
+                    localStorage.setItem('negocio_id', negocio.id);
+                    console.log('🏢 negocio_id guardado:', negocio.id);
+                }
                 
                 localStorage.setItem('adminAuth', 'true');
                 localStorage.setItem('adminUser', email);
