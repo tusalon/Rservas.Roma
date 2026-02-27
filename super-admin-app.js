@@ -1,15 +1,44 @@
 // super-admin-app.js
 
+const supabase = window.supabase.createClient(
+  window.SUPABASE_URL,
+  window.SUPABASE_ANON_KEY
+);
+
+const SUPER_ADMIN_EMAIL = 'rservasroma@gmail.com';
+
 function SuperAdminApp() {
     const [cargando, setCargando] = React.useState(true);
     const [negocios, setNegocios] = React.useState([]);
     const [negocioSeleccionado, setNegocioSeleccionado] = React.useState(null);
     const [mostrarDetalle, setMostrarDetalle] = React.useState(false);
-    const [filtro, setFiltro] = React.useState('todos'); // todos, activos, trial, suspendidos
+    const [filtro, setFiltro] = React.useState('todos');
+    const [verificado, setVerificado] = React.useState(false);
 
     React.useEffect(() => {
-        cargarNegocios();
+        verificarSuperAdmin();
     }, []);
+
+    const verificarSuperAdmin = async () => {
+        try {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            
+            if (error) throw error;
+            
+            if (!user || user.email !== SUPER_ADMIN_EMAIL) {
+                alert('Acceso denegado. Solo super admin puede entrar.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            setVerificado(true);
+            cargarNegocios();
+        } catch (error) {
+            console.error('Error verificando usuario:', error);
+            alert('Error al verificar usuario');
+            window.location.href = 'index.html';
+        }
+    };
 
     const cargarNegocios = async () => {
         setCargando(true);
@@ -21,7 +50,7 @@ function SuperAdminApp() {
 
             if (error) throw error;
             
-            // Eliminar duplicados (por si acaso)
+            // Eliminar duplicados
             const unicos = data.filter((item, index, self) => 
                 index === self.findIndex(t => t.id === item.id)
             );
@@ -29,7 +58,7 @@ function SuperAdminApp() {
             setNegocios(unicos);
         } catch (error) {
             console.error('Error cargando negocios:', error);
-            alert('Error al cargar los negocios');
+            alert('Error al cargar los negocios: ' + error.message);
         } finally {
             setCargando(false);
         }
@@ -47,6 +76,14 @@ function SuperAdminApp() {
         setNegocioSeleccionado(negocio);
         setMostrarDetalle(true);
     };
+
+    if (!verificado) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-pink-600"></div>
+            </div>
+        );
+    }
 
     if (cargando) {
         return (
@@ -129,11 +166,13 @@ function SuperAdminApp() {
                 <div className="bg-white rounded-xl shadow-sm p-6">
                     <h2 className="text-lg font-semibold mb-4">📋 Lista de negocios</h2>
                     
-                    <div className="space-y-3">
-                        {negociosFiltrados.length === 0 ? (
-                            <p className="text-gray-500 text-center py-8">No hay negocios para mostrar</p>
-                        ) : (
-                            negociosFiltrados.map(negocio => (
+                    {negocios.length === 0 ? (
+                        <div className="text-center py-8">
+                            <p className="text-gray-500">No hay negocios para mostrar</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {negociosFiltrados.map(negocio => (
                                 <div
                                     key={negocio.id}
                                     className="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
@@ -204,9 +243,9 @@ function SuperAdminApp() {
                                         </div>
                                     </div>
                                 </div>
-                            ))
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
