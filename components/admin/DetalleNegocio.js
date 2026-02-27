@@ -1,7 +1,6 @@
 // components/admin/DetalleNegocio.js
 
 function DetalleNegocio({ negocio, onCerrar, onActualizar }) {
-    const [accion, setAccion] = React.useState('');
     const [procesando, setProcesando] = React.useState(false);
     const [historialPagos, setHistorialPagos] = React.useState([]);
     const [cargandoHistorial, setCargandoHistorial] = React.useState(false);
@@ -77,10 +76,13 @@ function DetalleNegocio({ negocio, onCerrar, onActualizar }) {
     };
 
     const handleCambiarPlan = async (nuevoPlan) => {
+        console.log('📌 handleCambiarPlan EJECUTÁNDOSE con:', nuevoPlan);
+        
         if (!confirm(`¿Cambiar plan de "${negocio.plan_actual}" a "${nuevoPlan}"?`)) return;
         
         setProcesando(true);
         try {
+            console.log('📌 Actualizando en Supabase...');
             const { error } = await window.supabase
                 .from('suscripciones')
                 .update({ plan: nuevoPlan })
@@ -88,12 +90,13 @@ function DetalleNegocio({ negocio, onCerrar, onActualizar }) {
 
             if (error) throw error;
 
+            console.log('📌 Update exitoso');
             alert(`✅ Plan cambiado a ${nuevoPlan}`);
             onActualizar();
             onCerrar();
         } catch (error) {
-            console.error('Error cambiando plan:', error);
-            alert('Error al cambiar el plan');
+            console.error('❌ Error cambiando plan:', error);
+            alert('Error al cambiar el plan: ' + error.message);
         } finally {
             setProcesando(false);
         }
@@ -213,9 +216,13 @@ function DetalleNegocio({ negocio, onCerrar, onActualizar }) {
                     <div className="border-t pt-4">
                         <h4 className="font-semibold mb-3">⚙️ Acciones</h4>
                         <div className="flex flex-wrap gap-3">
-                            {/* Cambiar plan */}
+                            {/* Cambiar plan - CON CONSOLES.LOG */}
                             <select
-                                onChange={(e) => handleCambiarPlan(e.target.value)}
+                                onChange={(e) => {
+                                    console.log('🟢 Valor seleccionado:', e.target.value);
+                                    console.log('🟢 Llamando a handleCambiarPlan...');
+                                    handleCambiarPlan(e.target.value);
+                                }}
                                 disabled={procesando}
                                 className="px-3 py-2 border rounded-lg text-sm"
                                 defaultValue=""
