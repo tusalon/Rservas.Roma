@@ -13,8 +13,9 @@
 <body class="bg-gray-100">
     <div id="root"></div>
 
-    <!-- Scripts con rutas relativas y timestamp -->
-    <script type="text/javascript" src="utils/config.js?v=202402261532"></script>
+    <!-- Scripts con rutas relativas y timestamp - ORDEN CORRECTO -->
+    <script type="text/javascript" src="utils/supabase-config.js?v=202402261532"></script>
+    <script type="text/javascript" src="utils/config.js?v=202402261534"></script>
     <script type="text/javascript" src="utils/storage.js?v=202402261530"></script>
 
     <script type="text/javascript">
@@ -30,12 +31,11 @@
             console.log('✅ Supabase configurado correctamente en admin.html');
         }
     </script>
-     <script type="text/javascript" src="utils/supabase-config.js?v=202402261532"></script>
+
     <script type="text/javascript" src="utils/api.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/timeLogic.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/auth-clients.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/auth-barberos.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/config.js?v=202402261532"></script>
     <script type="text/javascript" src="utils/servicios.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/profesionales.js?v=202402261530"></script>
 
@@ -47,22 +47,22 @@
         console.log(' ✅ auth-clientes:', typeof window.verificarAccesoCliente);
         console.log(' ✅ salonConfig:', typeof window.salonConfig);
         console.log(' ✅ salonServicios:', typeof window.salonServicios);
-        console.log(' ✅ salonBarberos:', typeof window.salonBarberos);
+        console.log(' ✅ salonProfesionales:', typeof window.salonProfesionales);
         console.log(' ✅ storage:', typeof window.subirImagenServicio);
     </script>
 
     <script type="text/babel" src="components/admin/ConfigPanel.js?v=202402261530"></script>
     <script type="text/babel" src="components/admin/ServiciosPanel.js?v=202402261530"></script>
-    <script type="text/babel" src="components/admin/BarberosPanel.js?v=202402261530"></script>
+    <script type="text/babel" src="components/admin/ProfesionalesPanel.js?v=202402261530"></script>
     <script type="text/babel" src="components/admin/HorariosPorDiaPanel.js?v=202402261530"></script>
     <script type="text/babel" src="admin-app.js?v=202402261530"></script>
 
     <script>
         (function() {
             const isAdmin = localStorage.getItem('adminAuth') === 'true';
-            const barberoAuth = localStorage.getItem('barberoAuth');
+            const profesionalAuth = localStorage.getItem('profesionalAuth');
             
-            console.log('🔐 Verificando autenticación:', { isAdmin, barberoAuth: !!barberoAuth });
+            console.log('🔐 Verificando autenticación:', { isAdmin, profesionalAuth: !!profesionalAuth });
             console.log('🔐 SUPABASE_URL en auth:', window.SUPABASE_URL);
             
             if (isAdmin) {
@@ -78,8 +78,8 @@
                 return;
             }
             
-            if (barberoAuth) {
-                console.log('👤 Acceso como barbero');
+            if (profesionalAuth) {
+                console.log('👩‍🎨 Acceso como profesional');
                 return;
             }
             
