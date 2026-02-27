@@ -1,4 +1,4 @@
-// components/MyBookings.js - Pantalla de reservas del cliente (CON NOTIFICACIONES)
+// components/MyBookings.js - Pantalla de reservas de la clienta
 
 function MyBookings({ cliente, onVolver }) {
     const [bookings, setBookings] = React.useState([]);
@@ -31,7 +31,7 @@ function MyBookings({ cliente, onVolver }) {
             }
             
             const data = await response.json();
-            console.log('📋 Reservas del cliente:', data);
+            console.log('📋 Reservas de la clienta:', data);
             setBookings(Array.isArray(data) ? data : []);
             
         } catch (error) {
@@ -53,7 +53,6 @@ function MyBookings({ cliente, onVolver }) {
             const diffMinutos = Math.floor(diffMs / (1000 * 60));
             
             console.log('🕐 Verificando cancelación:', {
-                ahora: ahora.toLocaleString(),
                 turno: fechaTurno.toLocaleString(),
                 diffMinutos,
                 puede: diffMinutos > 60
@@ -83,18 +82,18 @@ function MyBookings({ cliente, onVolver }) {
             if (diffMinutos <= 0) {
                 return "⏰ El turno ya pasó";
             } else if (diffMinutos <= 60) {
-                return `⚠️ Faltan menos de ${diffMinutos} minutos - No puedes cancelar`;
+                return `⚠️ Faltan menos de ${diffMinutos} minutos - No podés cancelar`;
             } else if (diffHoras > 0) {
-                return `🕐 Faltan ${diffHoras}h ${minutosRestantes}m - Puedes cancelar`;
+                return `🕐 Faltan ${diffHoras}h ${minutosRestantes}m - Podés cancelar`;
             } else {
-                return `🕐 Faltan ${diffMinutos} minutos - Puedes cancelar`;
+                return `🕐 Faltan ${diffMinutos} minutos - Podés cancelar`;
             }
         } catch (error) {
             return "";
         }
     };
 
-    // 🔥 NOTIFICAR AL DUEÑO POR NTFY CUANDO UN CLIENTE CANCELA
+    // Notificar cancelación
     const notificarCancelacion = (bookingData) => {
         try {
             const fechaConDia = window.formatFechaCompleta ? 
@@ -102,22 +101,22 @@ function MyBookings({ cliente, onVolver }) {
                 bookingData.fecha;
             
             const mensajeLimpio = 
-`CANCELACION DE CLIENTE
+`CANCELACIÓN DE CLIENTA
 
 Cliente: ${bookingData.cliente_nombre}
 WhatsApp: ${bookingData.cliente_whatsapp}
 Servicio: ${bookingData.servicio}
 Fecha: ${fechaConDia}
 Hora: ${formatTo12Hour(bookingData.hora_inicio)}
-Barbero: ${bookingData.barbero_nombre || bookingData.trabajador_nombre || 'No asignado'}
+Profesional: ${bookingData.profesional_nombre || bookingData.trabajador_nombre || 'No asignada'}
 
-El cliente cancelo su turno desde la app.`;
+La clienta canceló su turno desde la app.`;
 
-            fetch('https://ntfy.sh/lag-barberia', {
+            fetch('https://ntfy.sh/rservas-roma', {
                 method: 'POST',
                 body: mensajeLimpio,
                 headers: {
-                    'Title': 'Cancelacion de cliente - LAG.barberia',
+                    'Title': '❌ Cancelación - Rservas.Roma',
                     'Priority': 'default',
                     'Tags': 'x'
                 }
@@ -143,13 +142,13 @@ El cliente cancelo su turno desde la app.`;
                 window.formatFechaCompleta(bookingData.fecha) : 
                 bookingData.fecha;
             
-            const mensaje = `❌ No puedes cancelar este turno porque faltan menos de 1 hora.
+            const mensaje = `❌ No podés cancelar este turno porque faltan menos de 1 hora.
             
 📅 Tu turno es el ${fechaConDia} a las ${formatTo12Hour(bookingData.hora_inicio)}
 
 ⏰ Solo se permiten cancelaciones con al menos 1 hora de anticipación.
 
-Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
+Si no podés asistir, contactanos por WhatsApp al +53 53357234`;
             
             alert(mensaje);
             return;
@@ -159,7 +158,7 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
             window.formatFechaCompleta(bookingData.fecha) : 
             bookingData.fecha;
         
-        if (!confirm(`¿Estás seguro que querés cancelar tu turno del ${fechaConDiaConfirm} a las ${formatTo12Hour(bookingData.hora_inicio)}?`)) {
+        if (!confirm(`¿Estás segura que querés cancelar tu turno del ${fechaConDiaConfirm} a las ${formatTo12Hour(bookingData.hora_inicio)}?`)) {
             return;
         }
         
@@ -182,7 +181,7 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                 throw new Error('Error al cancelar');
             }
             
-            // 🔥 ENVIAR NOTIFICACIÓN
+            // Enviar notificación
             notificarCancelacion(bookingData);
             
             alert('✅ Turno cancelado correctamente');
@@ -200,7 +199,7 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
     const reservasFiltradas = bookings.filter(booking => {
         if (filtro === 'activas') return booking.estado !== 'Cancelado';
         if (filtro === 'canceladas') return booking.estado === 'Cancelado';
-        return true; // 'todas'
+        return true;
     });
 
     const activasCount = bookings.filter(b => b.estado !== 'Cancelado').length;
@@ -213,12 +212,12 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                 <div className="max-w-3xl mx-auto px-4 py-4 flex justify-between items-center">
                     <button
                         onClick={onVolver}
-                        className="flex items-center gap-2 text-gray-600 hover:text-amber-600 transition"
+                        className="flex items-center gap-2 text-gray-600 hover:text-pink-600 transition"
                     >
                         <i className="icon-arrow-left text-xl"></i>
                         <span className="font-medium">Volver</span>
                     </button>
-                    <h1 className="text-xl font-bold text-gray-800">Mis Reservas</h1>
+                    <h1 className="text-xl font-bold text-gray-800">Mis Turnos</h1>
                     <div className="w-20"></div>
                 </div>
             </div>
@@ -226,10 +225,10 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
             {/* Contenido */}
             <div className="max-w-3xl mx-auto px-4 py-6">
                 
-                {/* Info del cliente */}
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                {/* Info de la clienta */}
+                <div className="bg-pink-50 border border-pink-200 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-amber-600 rounded-full flex items-center justify-center text-white font-bold">
+                        <div className="w-10 h-10 bg-pink-600 rounded-full flex items-center justify-center text-white font-bold">
                             {cliente.nombre.charAt(0)}
                         </div>
                         <div>
@@ -253,7 +252,7 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                         className={`
                             px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap
                             ${filtro === 'activas' 
-                                ? 'bg-green-600 text-white shadow-md' 
+                                ? 'bg-pink-600 text-white shadow-md' 
                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
                         `}
                     >
@@ -275,7 +274,7 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                         className={`
                             px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap
                             ${filtro === 'todas' 
-                                ? 'bg-amber-600 text-white shadow-md' 
+                                ? 'bg-gray-800 text-white shadow-md' 
                                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}
                         `}
                     >
@@ -286,16 +285,16 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                 {/* Listado de reservas */}
                 {loading ? (
                     <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-600 mx-auto"></div>
-                        <p className="text-gray-500 mt-4">Cargando tus reservas...</p>
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto"></div>
+                        <p className="text-gray-500 mt-4">Cargando tus turnos...</p>
                     </div>
                 ) : reservasFiltradas.length === 0 ? (
                     <div className="text-center py-12 bg-white rounded-xl shadow-sm">
-                        <div className="text-6xl mb-4">📅</div>
-                        <p className="text-gray-500 mb-2">No tenés reservas {filtro !== 'todas' ? filtro : ''}</p>
+                        <div className="text-6xl mb-4">💅</div>
+                        <p className="text-gray-500 mb-2">No tenés turnos {filtro !== 'todas' ? filtro : ''}</p>
                         <button
                             onClick={onVolver}
-                            className="text-amber-600 font-medium hover:underline"
+                            className="text-pink-600 font-medium hover:underline"
                         >
                             Reservar un turno
                         </button>
@@ -318,21 +317,21 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                                         bg-white rounded-xl shadow-sm border-l-4 overflow-hidden
                                         ${booking.estado === 'Cancelado' 
                                             ? 'border-l-red-500 opacity-70' 
-                                            : 'border-l-amber-500'}
+                                            : 'border-l-pink-500'}
                                     `}
                                 >
                                     <div className="p-4">
                                         <div className="flex justify-between items-start mb-3">
                                             <div>
-                                                <span className="text-sm text-amber-600 font-medium block mb-1">
+                                                <span className="text-sm text-pink-600 font-medium block mb-1">
                                                     {fechaConDia}
                                                 </span>
                                                 <h3 className="font-bold text-lg">{booking.servicio}</h3>
                                             </div>
                                             <span className={`
                                                 px-3 py-1 rounded-full text-xs font-semibold
-                                                ${booking.estado === 'Reservado' ? 'bg-green-100 text-green-700' :
-                                                  booking.estado === 'Confirmado' ? 'bg-blue-100 text-blue-700' :
+                                                ${booking.estado === 'Reservado' ? 'bg-pink-100 text-pink-700' :
+                                                  booking.estado === 'Completado' ? 'bg-green-100 text-green-700' :
                                                   'bg-red-100 text-red-700'}
                                             `}>
                                                 {booking.estado}
@@ -341,16 +340,16 @@ Si no puede asistir, contactanos por WhatsApp al +53 53357234`;
                                         
                                         <div className="grid grid-cols-2 gap-3 text-sm mb-4">
                                             <div className="flex items-center gap-2 text-gray-600">
-                                                <i className="icon-clock text-amber-500"></i>
+                                                <i className="icon-clock text-pink-500"></i>
                                                 <span>{formatTo12Hour(booking.hora_inicio)}</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-600">
-                                                <i className="icon-scissors text-amber-500"></i>
+                                                <i className="icon-scissors text-pink-500"></i>
                                                 <span>{booking.duracion} min</span>
                                             </div>
                                             <div className="flex items-center gap-2 text-gray-600 col-span-2">
-                                                <i className="icon-user text-amber-500"></i>
-                                                <span>Barbero: {booking.barbero_nombre || booking.trabajador_nombre || 'No asignado'}</span>
+                                                <i className="icon-user text-pink-500"></i>
+                                                <span>Profesional: {booking.profesional_nombre || booking.trabajador_nombre || 'No asignada'}</span>
                                             </div>
                                         </div>
                                         

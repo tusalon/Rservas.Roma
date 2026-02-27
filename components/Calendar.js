@@ -1,11 +1,11 @@
-// components/Calendar.js - Versión para LAG.barberia (CORREGIDO)
+// components/Calendar.js - Versión femenina para salón de belleza
 
 function Calendar({ onDateSelect, selectedDate, worker }) {
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [diasLaborales, setDiasLaborales] = React.useState([]);
     const [cargandoHorarios, setCargandoHorarios] = React.useState(false);
 
-    // 🔥 Función para formatear fecha local correctamente
+    // Función para formatear fecha local correctamente
     const formatDateLocal = (dateStr) => {
         if (!dateStr) return '';
         const [year, month, day] = dateStr.split('-').map(Number);
@@ -18,12 +18,32 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
         const cargarDiasLaborales = async () => {
             setCargandoHorarios(true);
             try {
-                const horarios = await window.salonConfig.getHorariosBarbero(worker.id);
-                console.log(`📅 Días laborales de ${worker.nombre}:`, horarios.dias);
-                setDiasLaborales(horarios.dias || []);
+                // Usar la nueva tabla horarios_profesionales
+                const response = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/horarios_profesionales?profesional_id=eq.${worker.id}&select=*`,
+                    {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data.length > 0) {
+                        console.log(`📅 Días laborales de ${worker.nombre}:`, data[0].dias);
+                        setDiasLaborales(data[0].dias || []);
+                    } else {
+                        // Si no tiene configuración, todos los días hábiles
+                        setDiasLaborales(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']);
+                    }
+                } else {
+                    setDiasLaborales(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']);
+                }
             } catch (error) {
                 console.error('Error cargando días laborales:', error);
-                setDiasLaborales([]);
+                setDiasLaborales(['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado']);
             } finally {
                 setCargandoHorarios(false);
             }
@@ -75,7 +95,7 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
         return date.getDay() === 0;
     };
 
-    const barberoTrabajaEsteDia = (date) => {
+    const profesionalTrabajaEsteDia = (date) => {
         if (!worker || diasLaborales.length === 0) return true;
         
         const diasSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
@@ -122,16 +142,16 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
         return (
             <div className="space-y-4 animate-fade-in">
                 <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                    <div className="icon-calendar text-amber-500"></div>
+                    <i className="icon-calendar text-pink-500"></i>
                     3. Seleccioná una fecha
                     {worker && (
-                        <span className="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded-full ml-2">
+                        <span className="text-sm bg-pink-100 text-pink-700 px-3 py-1 rounded-full ml-2">
                             con {worker.nombre}
                         </span>
                     )}
                 </h2>
                 <div className="text-center py-8">
-                    <div className="animate-spin h-8 w-8 border-b-2 border-amber-600 rounded-full mx-auto"></div>
+                    <div className="animate-spin h-8 w-8 border-b-2 border-pink-600 rounded-full mx-auto"></div>
                     <p className="text-gray-500 mt-4">Cargando disponibilidad...</p>
                 </div>
             </div>
@@ -141,10 +161,10 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
     return (
         <div className="space-y-4 animate-fade-in">
             <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-                <div className="icon-calendar text-amber-500"></div>
+                <i className="icon-calendar text-pink-500"></i>
                 3. Seleccioná una fecha
                 {worker && (
-                    <span className="text-sm bg-amber-100 text-amber-700 px-3 py-1 rounded-full ml-2">
+                    <span className="text-sm bg-pink-100 text-pink-700 px-3 py-1 rounded-full ml-2">
                         con {worker.nombre}
                     </span>
                 )}
@@ -182,27 +202,27 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
                             const sunday = isSunday(date);
                             const selected = selectedDate === dateStr;
                             
-                            const barberoTrabaja = barberoTrabajaEsteDia(date);
-                            const available = !past && !sunday && barberoTrabaja;
+                            const profesionalTrabaja = profesionalTrabajaEsteDia(date);
+                            const available = !past && !sunday && profesionalTrabaja;
                             
                             let className = "h-10 w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all relative";
                             
                             if (selected) {
-                                className += " bg-amber-600 text-white shadow-md scale-105 ring-2 ring-amber-300";
+                                className += " bg-pink-600 text-white shadow-md scale-105 ring-2 ring-pink-300";
                             } else if (!available) {
                                 className += " text-gray-300 cursor-not-allowed bg-gray-50";
                             } else {
-                                className += " text-gray-700 hover:bg-amber-50 hover:text-amber-600 hover:scale-105 cursor-pointer";
+                                className += " text-gray-700 hover:bg-pink-50 hover:text-pink-600 hover:scale-105 cursor-pointer";
                             }
                             
                             let title = "";
                             if (past && dateStr === getTodayLocalString()) {
-                                title = "Hoy ya no hay horarios disponibles";
+                                title = "Hoy ya no hay turnos disponibles";
                             } else if (past) {
                                 title = "Fecha pasada";
                             } else if (sunday) {
                                 title = "Domingo cerrado";
-                            } else if (!barberoTrabaja && worker) {
+                            } else if (!profesionalTrabaja && worker) {
                                 title = `${worker.nombre} no trabaja este día`;
                             } else {
                                 title = "Disponible";
@@ -218,7 +238,7 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
                                 >
                                     {date.getDate()}
                                     {available && !selected && (
-                                        <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-green-400 rounded-full"></span>
+                                        <span className="absolute bottom-0.5 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-pink-400 rounded-full"></span>
                                     )}
                                 </button>
                             );
@@ -228,14 +248,20 @@ function Calendar({ onDateSelect, selectedDate, worker }) {
             </div>
 
             {worker && (
-                <div className="text-xs text-gray-500 bg-blue-50 p-3 rounded-lg border border-blue-100">
+                <div className="text-xs text-gray-500 bg-pink-50 p-3 rounded-lg border border-pink-100">
                     <div className="flex items-center gap-2">
-                        <div className="icon-info text-blue-500 text-lg"></div>
+                        <i className="icon-info text-pink-500 text-lg"></i>
                         <span>
                             <strong>📅 Días que trabaja {worker.nombre}:</strong>{' '}
                             {diasLaborales.length > 0 
-                                ? diasLaborales.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')
-                                : 'No hay configuración (todos los días disponibles)'}
+                                ? diasLaborales.map(d => {
+                                    const diasMap = {
+                                        'lunes': 'Lunes', 'martes': 'Martes', 'miercoles': 'Miércoles',
+                                        'jueves': 'Jueves', 'viernes': 'Viernes', 'sabado': 'Sábado', 'domingo': 'Domingo'
+                                    };
+                                    return diasMap[d] || d;
+                                }).join(', ')
+                                : 'Todos los días (excepto domingos)'}
                         </span>
                     </div>
                 </div>

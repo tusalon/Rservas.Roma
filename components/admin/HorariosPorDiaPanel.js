@@ -1,6 +1,6 @@
-// components/admin/HorariosPorDiaPanel.js - Panel para configurar horarios por día
+// components/admin/HorariosPorDiaPanel.js - Configuración de horarios por día para profesionales
 
-function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }) {
+function HorariosPorDiaPanel({ profesionalId, profesionalNombre, onGuardar, onCancelar }) {
     const [horariosPorDia, setHorariosPorDia] = React.useState({});
     const [cargando, setCargando] = React.useState(true);
     const [diaSeleccionado, setDiaSeleccionado] = React.useState('lunes');
@@ -32,27 +32,51 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
     }, []);
 
     React.useEffect(() => {
-        if (barberoId) {
+        if (profesionalId) {
             cargarHorarios();
         }
-    }, [barberoId]);
+    }, [profesionalId]);
 
     const cargarHorarios = async () => {
         setCargando(true);
         try {
-            const horarios = await window.salonConfig.getHorariosPorDia(barberoId);
-            console.log('📋 Horarios cargados por día:', horarios);
+            // Usar la tabla horarios_profesionales
+            const response = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/horarios_profesionales?profesional_id=eq.${profesionalId}&select=horarios_por_dia`,
+                {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                    }
+                }
+            );
             
-            // Inicializar todos los días con array vacío si no existen
-            const horariosInicializados = {};
-            dias.forEach(dia => {
-                horariosInicializados[dia.id] = horarios[dia.id] || [];
-            });
-            
-            setHorariosPorDia(horariosInicializados);
-            
-            // Actualizar horas disponibles para el día seleccionado
-            setHorasDisponibles(horariosInicializados[diaSeleccionado] || []);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('📋 Horarios cargados:', data);
+                
+                let horarios = {};
+                if (data && data.length > 0 && data[0].horarios_por_dia) {
+                    horarios = data[0].horarios_por_dia;
+                }
+                
+                // Inicializar todos los días con array vacío si no existen
+                const horariosInicializados = {};
+                dias.forEach(dia => {
+                    horariosInicializados[dia.id] = horarios[dia.id] || [];
+                });
+                
+                setHorariosPorDia(horariosInicializados);
+                setHorasDisponibles(horariosInicializados[diaSeleccionado] || []);
+            } else {
+                // Si no hay horarios, inicializar vacío
+                const horariosInicializados = {};
+                dias.forEach(dia => {
+                    horariosInicializados[dia.id] = [];
+                });
+                setHorariosPorDia(horariosInicializados);
+                setHorasDisponibles([]);
+            }
             
         } catch (error) {
             console.error('Error cargando horarios:', error);
@@ -133,17 +157,100 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
 
     const handleGuardar = async () => {
         try {
-            await window.salonConfig.guardarHorariosPorDia(barberoId, horariosPorDia);
+            // Guardar en la tabla horarios_profesionales
+            const response = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/horarios_profesionales?profesional_id=eq.${profesionalId}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                    }
+                }
+            );
+            
+            const existentes = await response.json();
+            
+            // Calcular todas las horas únicas para el resumen
+            const todasLasHorasArray = new Set();
+            Object.values(horariosPorDia).forEach(horasArray => {
+                horasArray.forEach(hora => todasLasHorasArray.add(hora));
+            });
+            const horasArray = Array.from(todasLasHorasArray).sort((a, b) => a - b);
+            
+            // Calcular días que trabaja
+            const diasQueTrabajan = Object.keys(horariosPorDia).filter(dia => horariosPorDia[dia].length > 0);
+            
+            let saveResponse;
+            
+            if (existentes && existentes.length > 0) {
+                // Actualizar existente
+                saveResponse = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/horarios_profesionales?id=eq.${existentes[0].id}`,
+                    {
+                        method: 'PATCH',
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            horarios_por_dia: horariosPorDia,
+                            horas: horasArray,
+                            dias: diasQueTrabajan
+                        })
+                    }
+                );
+            } else {
+                // Crear nuevo
+                saveResponse = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/horarios_profesionales`,
+                    {
+                        method: 'POST',
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json',
+                            'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify({
+                            profesional_id: profesionalId,
+                            horarios_por_dia: horariosPorDia,
+                            horas: horasArray,
+                            dias: diasQueTrabajan
+                        })
+                    }
+                );
+            }
+            
+            if (!saveResponse.ok) {
+                const error = await saveResponse.text();
+                console.error('Error guardando horarios:', error);
+                alert('Error al guardar horarios');
+                return;
+            }
+            
+            const data = await saveResponse.json();
+            console.log('✅ Horarios guardados:', data);
+            
+            if (window.dispatchEvent) {
+                window.dispatchEvent(new Event('horariosActualizados'));
+            }
+            
+            alert('✅ Horarios guardados correctamente');
             onGuardar(horariosPorDia);
+            
         } catch (error) {
             console.error('Error guardando:', error);
+            alert('Error al guardar horarios');
         }
     };
 
     if (cargando) {
         return (
             <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500 mx-auto"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
                 <p className="text-gray-500 mt-2">Cargando horarios...</p>
             </div>
         );
@@ -151,8 +258,8 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
 
     return (
         <div className="bg-white rounded-xl shadow-sm p-6">
-            <h3 className="text-lg font-bold mb-4">
-                📅 Horarios de {barberoNombre} por día
+            <h3 className="text-lg font-bold mb-4 text-pink-800">
+                💅 Horarios de {profesionalNombre}
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -168,8 +275,8 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                                 className={`
                                     w-full text-left px-4 py-3 rounded-lg transition-all
                                     ${diaSeleccionado === dia.id 
-                                        ? 'bg-amber-600 text-white shadow-md' 
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                                        ? 'bg-pink-600 text-white shadow-md' 
+                                        : 'bg-gray-100 text-gray-700 hover:bg-pink-100 hover:text-pink-700'}
                                 `}
                             >
                                 <div className="flex justify-between items-center">
@@ -178,8 +285,8 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                                         <span className={`
                                             text-xs px-2 py-1 rounded-full
                                             ${diaSeleccionado === dia.id 
-                                                ? 'bg-amber-500 text-white' 
-                                                : 'bg-gray-300 text-gray-700'}
+                                                ? 'bg-pink-500 text-white' 
+                                                : 'bg-pink-200 text-pink-700'}
                                         `}>
                                             {cantidadHoras} hs
                                         </span>
@@ -196,7 +303,7 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                         <h4 className="font-medium text-gray-700">
                             Horas para {dias.find(d => d.id === diaSeleccionado)?.nombre}
                             {horasDisponibles.length > 0 && (
-                                <span className="ml-2 text-sm text-amber-600">
+                                <span className="ml-2 text-sm text-pink-600">
                                     ({horasDisponibles.length} horarios)
                                 </span>
                             )}
@@ -205,7 +312,7 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                         <div className="flex gap-2">
                             <button
                                 onClick={toggleTodasLasHoras}
-                                className="px-3 py-1 bg-blue-500 text-white rounded-lg text-sm hover:bg-blue-600"
+                                className="px-3 py-1 bg-pink-500 text-white rounded-lg text-sm hover:bg-pink-600"
                             >
                                 {horasDisponibles.length === todasLasHoras.length ? 'Quitar todas' : 'Agregar todas'}
                             </button>
@@ -219,8 +326,8 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                     </div>
                     
                     {/* Selector para copiar horarios de otro día */}
-                    <div className="mb-4 p-3 bg-gray-50 rounded-lg flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Copiar horarios de:</span>
+                    <div className="mb-4 p-3 bg-pink-50 rounded-lg flex items-center gap-2">
+                        <span className="text-sm text-pink-700">Copiar horarios de:</span>
                         <select
                             onChange={(e) => copiarHorarios(e.target.value)}
                             className="border rounded-lg px-2 py-1 text-sm"
@@ -249,8 +356,8 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                                     className={`
                                         px-2 py-1 text-xs font-medium rounded transition-all
                                         ${activa 
-                                            ? 'bg-amber-600 text-white shadow-md hover:bg-amber-700' 
-                                            : 'bg-white border border-gray-300 text-gray-700 hover:border-amber-400 hover:bg-amber-50'}
+                                            ? 'bg-pink-600 text-white shadow-md hover:bg-pink-700' 
+                                            : 'bg-white border border-gray-300 text-gray-700 hover:border-pink-400 hover:bg-pink-50'}
                                     `}
                                 >
                                     {hora.legible}
@@ -260,7 +367,7 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                     </div>
                     
                     <p className="text-xs text-gray-500 mt-2">
-                        ⏰ Horarios cada 30 minutos. Seleccioná las horas en las que {barberoNombre} trabaja este día.
+                        ⏰ Horarios cada 30 minutos. Seleccioná las horas en las que {profesionalNombre} trabaja este día.
                     </p>
                 </div>
             </div>
@@ -272,9 +379,9 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                     {dias.map(dia => {
                         const cantidad = horariosPorDia[dia.id]?.length || 0;
                         return (
-                            <div key={dia.id} className="text-center p-2 bg-gray-50 rounded-lg">
-                                <div className="text-xs text-gray-500">{dia.nombre.substring(0, 3)}</div>
-                                <div className={`font-bold ${cantidad > 0 ? 'text-amber-600' : 'text-gray-400'}`}>
+                            <div key={dia.id} className="text-center p-2 bg-pink-50 rounded-lg">
+                                <div className="text-xs text-pink-600">{dia.nombre.substring(0, 3)}</div>
+                                <div className={`font-bold ${cantidad > 0 ? 'text-pink-600' : 'text-gray-400'}`}>
                                     {cantidad} hs
                                 </div>
                             </div>
@@ -293,7 +400,7 @@ function HorariosPorDiaPanel({ barberoId, barberoNombre, onGuardar, onCancelar }
                 </button>
                 <button
                     onClick={handleGuardar}
-                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700"
+                    className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
                 >
                     Guardar Horarios
                 </button>

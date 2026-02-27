@@ -1,21 +1,20 @@
-// utils/barberos.js - Gestión de barberos para LAG.barberia
+// utils/profesionales.js - Gestión de profesionales para salón de belleza
 
-console.log('👥 barberos.js cargado (modo Supabase)');
+console.log('💅 profesionales.js cargado');
 
-let barberosCache = [];
-let ultimaActualizacionBarberos = 0;
-const CACHE_DURATION_BARBEROS = 5 * 60 * 1000;
+let profesionalesCache = [];
+let ultimaActualizacion = 0;
+const CACHE_DURATION = 5 * 60 * 1000;
 
-async function cargarBarberosDesdeDB() {
+async function cargarProfesionalesDesdeDB() {
     try {
-        console.log('🌐 Cargando barberos desde Supabase...');
+        console.log('🌐 Cargando profesionales desde Supabase...');
         const response = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/barberos?select=*&order=id.asc`,
+            `${window.SUPABASE_URL}/rest/v1/profesionales?select=*&order=nombre.asc`,
             {
                 headers: {
                     'apikey': window.SUPABASE_ANON_KEY,
                     'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
                 }
             }
         );
@@ -26,52 +25,44 @@ async function cargarBarberosDesdeDB() {
         }
         
         const data = await response.json();
-        console.log('✅ Barberos cargados desde Supabase:', data);
-        barberosCache = data;
-        ultimaActualizacionBarberos = Date.now();
+        console.log('✅ Profesionales cargados:', data);
+        profesionalesCache = data;
+        ultimaActualizacion = Date.now();
         return data;
     } catch (error) {
-        console.error('Error cargando barberos:', error);
+        console.error('Error cargando profesionales:', error);
         return null;
     }
 }
 
-window.salonBarberos = {
+window.salonProfesionales = {
     getAll: async function(activos = true) {
-        if (Date.now() - ultimaActualizacionBarberos < CACHE_DURATION_BARBEROS && barberosCache.length > 0) {
+        if (Date.now() - ultimaActualizacion < CACHE_DURATION && profesionalesCache.length > 0) {
             if (activos) {
-                return barberosCache.filter(b => b.activo === true);
+                return profesionalesCache.filter(p => p.activo === true);
             }
-            return [...barberosCache];
+            return [...profesionalesCache];
         }
         
-        const datos = await cargarBarberosDesdeDB();
+        const datos = await cargarProfesionalesDesdeDB();
         if (datos) {
             if (activos) {
-                return datos.filter(b => b.activo === true);
+                return datos.filter(p => p.activo === true);
             }
             return datos;
         }
         
-        const defaultData = [
-            { id: 1, nombre: "Carlos", especialidad: "Cortes clásicos", color: "bg-amber-600", avatar: "👨‍🎨", activo: true, nivel: 3 },
-            { id: 2, nombre: "Miguel", especialidad: "Barba y diseños", color: "bg-amber-700", avatar: "👨‍🎨", activo: true, nivel: 2 },
-            { id: 3, nombre: "Javier", especialidad: "Cortes modernos", color: "bg-amber-800", avatar: "👨‍🎨", activo: true, nivel: 1 }
-        ];
-        barberosCache = defaultData;
-        ultimaActualizacionBarberos = Date.now();
-        return activas ? defaultData : defaultData;
+        return [];
     },
     
     getById: async function(id) {
         try {
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/barberos?id=eq.${id}&select=*`,
+                `${window.SUPABASE_URL}/rest/v1/profesionales?id=eq.${id}&select=*`,
                 {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
@@ -79,15 +70,15 @@ window.salonBarberos = {
             const data = await response.json();
             return data[0] || null;
         } catch (error) {
-            console.error('Error obteniendo barbero:', error);
+            console.error('Error obteniendo profesional:', error);
             return null;
         }
     },
     
-    crear: async function(barbero) {
+    crear: async function(profesional) {
         try {
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/barberos`,
+                `${window.SUPABASE_URL}/rest/v1/profesionales`,
                 {
                     method: 'POST',
                     headers: {
@@ -97,31 +88,31 @@ window.salonBarberos = {
                         'Prefer': 'return=representation'
                     },
                     body: JSON.stringify({
-                        nombre: barbero.nombre,
-                        especialidad: barbero.especialidad,
-                        color: barbero.color || 'bg-amber-600',
-                        avatar: barbero.avatar || '👨‍🎨',
+                        nombre: profesional.nombre,
+                        especialidad: profesional.especialidad,
+                        color: profesional.color || 'bg-pink-600',
+                        avatar: profesional.avatar || '💅',
                         activo: true,
-                        telefono: barbero.telefono || null,
-                        password: barbero.password || null,
-                        nivel: barbero.nivel || 1
+                        telefono: profesional.telefono || null,
+                        password: profesional.password || null,
+                        nivel: profesional.nivel || 1
                     })
                 }
             );
             
             if (!response.ok) {
                 const error = await response.text();
-                console.error('Error al crear barbero:', error);
+                console.error('Error al crear profesional:', error);
                 return null;
             }
             
             const nuevo = await response.json();
-            console.log('✅ Barbero creado:', nuevo);
+            console.log('✅ Profesional creado:', nuevo);
             
-            barberosCache = await cargarBarberosDesdeDB() || barberosCache;
+            profesionalesCache = await cargarProfesionalesDesdeDB() || profesionalesCache;
             
             if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('barberosActualizados'));
+                window.dispatchEvent(new Event('profesionalesActualizados'));
             }
             
             return nuevo[0];
@@ -134,7 +125,7 @@ window.salonBarberos = {
     actualizar: async function(id, cambios) {
         try {
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/barberos?id=eq.${id}`,
+                `${window.SUPABASE_URL}/rest/v1/profesionales?id=eq.${id}`,
                 {
                     method: 'PATCH',
                     headers: {
@@ -149,17 +140,17 @@ window.salonBarberos = {
             
             if (!response.ok) {
                 const error = await response.text();
-                console.error('Error al actualizar barbero:', error);
+                console.error('Error al actualizar profesional:', error);
                 return null;
             }
             
             const actualizado = await response.json();
-            console.log('✅ Barbero actualizado:', actualizado);
+            console.log('✅ Profesional actualizado:', actualizado);
             
-            barberosCache = await cargarBarberosDesdeDB() || barberosCache;
+            profesionalesCache = await cargarProfesionalesDesdeDB() || profesionalesCache;
             
             if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('barberosActualizados'));
+                window.dispatchEvent(new Event('profesionalesActualizados'));
             }
             
             return actualizado[0];
@@ -172,29 +163,28 @@ window.salonBarberos = {
     eliminar: async function(id) {
         try {
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/barberos?id=eq.${id}`,
+                `${window.SUPABASE_URL}/rest/v1/profesionales?id=eq.${id}`,
                 {
                     method: 'DELETE',
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
             
             if (!response.ok) {
                 const error = await response.text();
-                console.error('Error al eliminar barbero:', error);
+                console.error('Error al eliminar profesional:', error);
                 return false;
             }
             
-            console.log('✅ Barbero eliminado');
+            console.log('✅ Profesional eliminado');
             
-            barberosCache = await cargarBarberosDesdeDB() || barberosCache;
+            profesionalesCache = await cargarProfesionalesDesdeDB() || profesionalesCache;
             
             if (window.dispatchEvent) {
-                window.dispatchEvent(new Event('barberosActualizados'));
+                window.dispatchEvent(new Event('profesionalesActualizados'));
             }
             
             return true;
@@ -206,7 +196,7 @@ window.salonBarberos = {
 };
 
 setTimeout(async () => {
-    await window.salonBarberos.getAll(false);
+    await window.salonProfesionales.getAll(false);
 }, 1000);
 
-console.log('✅ salonBarberos inicializado');
+console.log('✅ salonProfesionales inicializado');

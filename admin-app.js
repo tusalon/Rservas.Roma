@@ -1,4 +1,4 @@
-// admin-app.js - LAG.barberia (VERSIÓN COMPLETA CON TURNOS COMPLETADOS)
+// admin-app.js - Rservas.Roma (VERSIÓN COMPLETA)
 
 // ============================================
 // FUNCIONES DE SUPABASE
@@ -74,7 +74,7 @@ async function createBooking(bookingData) {
 }
 
 // ============================================
-// 🔥 FUNCIÓN PARA MARCAR TURNOS COMO COMPLETADOS
+// FUNCIÓN PARA MARCAR TURNOS COMO COMPLETADOS
 // ============================================
 async function marcarTurnosCompletados() {
     try {
@@ -86,9 +86,8 @@ async function marcarTurnosCompletados() {
         
         console.log('⏰ Verificando turnos para marcar como completados...');
         
-        // Buscar turnos Reservados con fecha <= hoy
         const response = await fetch(
-            `${window.SUPABASE_URL}/rest/v1/reservas?estado=eq.Reservado&fecha=lte.${hoy}&select=id,fecha,hora_inicio,hora_fin,cliente_nombre,servicio,barbero_nombre`,
+            `${window.SUPABASE_URL}/rest/v1/reservas?estado=eq.Reservado&fecha=lte.${hoy}&select=id,fecha,hora_inicio,hora_fin,cliente_nombre,servicio,profesional_nombre`,
             {
                 headers: {
                     'apikey': window.SUPABASE_ANON_KEY,
@@ -105,10 +104,8 @@ async function marcarTurnosCompletados() {
         const turnos = await response.json();
         
         const turnosACompletar = turnos.filter(turno => {
-            // Si la fecha es menor a hoy, completar directamente
             if (turno.fecha < hoy) return true;
             
-            // Si es hoy, verificar si la hora de inicio ya pasó
             if (turno.fecha === hoy) {
                 const [horas, minutos] = turno.hora_inicio.split(':').map(Number);
                 const totalMinutosTurno = horas * 60 + minutos;
@@ -121,7 +118,6 @@ async function marcarTurnosCompletados() {
         if (turnosACompletar.length > 0) {
             console.log(`✅ ${turnosACompletar.length} turnos a marcar como completados`);
             
-            // Marcar cada turno como completado
             for (const turno of turnosACompletar) {
                 console.log(`📝 Completando turno de ${turno.cliente_nombre} - ${turno.fecha} ${turno.hora_inicio}`);
                 
@@ -171,21 +167,6 @@ const calculateEndTime = (startTime, duration) => {
     return `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
 };
 
-const getMinAllowedTime = () => {
-    const ahora = new Date();
-    const horaActual = ahora.getHours();
-    const minutosActuales = ahora.getMinutes();
-    const totalMinutosActual = horaActual * 60 + minutosActuales;
-    const minAllowedMinutes = totalMinutosActual + 120;
-    
-    return {
-        totalMinutes: minAllowedMinutes,
-        hours: Math.floor(minAllowedMinutes / 60),
-        minutes: minAllowedMinutes % 60,
-        formatted: `${Math.floor(minAllowedMinutes / 60).toString().padStart(2, '0')}:${(minAllowedMinutes % 60).toString().padStart(2, '0')}`
-    };
-};
-
 const getCurrentLocalDate = () => {
     const ahora = new Date();
     const year = ahora.getFullYear();
@@ -201,7 +182,7 @@ const indiceToHoraLegible = (indice) => {
 };
 
 // ============================================
-// FUNCIÓN PARA ENVIAR MENSAJE DE CANCELACIÓN POR WHATSAPP
+// FUNCIÓN PARA ENVIAR MENSAJE DE CANCELACIÓN
 // ============================================
 const enviarCancelacionWhatsApp = (bookingData) => {
     try {
@@ -210,23 +191,23 @@ const enviarCancelacionWhatsApp = (bookingData) => {
             bookingData.fecha;
         
         const mensaje = 
-`❌ *CANCELACIÓN DE TURNO - LAG.barberia*
+`❌ *CANCELACIÓN DE TURNO - Rservas.Roma*
 
 Hola *${bookingData.cliente_nombre}*, lamentamos informarte que tu turno ha sido cancelado.
 
 📅 *Fecha:* ${fechaConDia}
 ⏰ *Hora:* ${formatTo12Hour(bookingData.hora_inicio)}
-💈 *Servicio:* ${bookingData.servicio}
-👨‍🎨 *Barbero:* ${bookingData.barbero_nombre || bookingData.trabajador_nombre || 'No asignado'}
+💅 *Servicio:* ${bookingData.servicio}
+👩‍🎨 *Profesional:* ${bookingData.profesional_nombre || bookingData.trabajador_nombre || 'No asignada'}
 
 🔔 *Motivo:* Cancelación por administración
 
 📱 *¿Querés reprogramar?*
 Podés hacerlo desde la app
 
-Disculpá las molestias. Esperamos verte pronto en LAG.barberia ✂️
+Disculpá las molestias. Esperamos verte pronto ✨
 
-LAG.barberia - Nivel que se nota`;
+Rservas.Roma - Belleza que se nota`;
 
         const telefono = bookingData.cliente_whatsapp.replace(/\D/g, '');
         const encodedText = encodeURIComponent(mensaje);
@@ -243,21 +224,17 @@ LAG.barberia - Nivel que se nota`;
 // COMPONENTE PRINCIPAL
 // ============================================
 function AdminApp() {
-    // Estados principales
     const [bookings, setBookings] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
     const [filterDate, setFilterDate] = React.useState('');
     const [statusFilter, setStatusFilter] = React.useState('activas');
     
-    // Detectar rol del usuario y nivel
     const [userRole, setUserRole] = React.useState('admin');
     const [userNivel, setUserNivel] = React.useState(3);
-    const [barbero, setBarbero] = React.useState(null);
+    const [profesional, setProfesional] = React.useState(null);
     
-    // Pestaña activa
     const [tabActivo, setTabActivo] = React.useState('reservas');
     
-    // Estados para clientes pendientes
     const [showClientesPendientes, setShowClientesPendientes] = React.useState(false);
     const [clientesPendientes, setClientesPendientes] = React.useState([]);
     const [showClientesAutorizados, setShowClientesAutorizados] = React.useState(false);
@@ -265,70 +242,67 @@ function AdminApp() {
     const [errorClientes, setErrorClientes] = React.useState('');
     const [cargandoClientes, setCargandoClientes] = React.useState(false);
 
-    // Modal para crear reserva manual
     const [showNuevaReservaModal, setShowNuevaReservaModal] = React.useState(false);
     const [nuevaReservaData, setNuevaReservaData] = React.useState({
         cliente_nombre: '',
         cliente_whatsapp: '',
         servicio: '',
-        barbero_id: '',
+        profesional_id: '',
         fecha: '',
         hora_inicio: ''
     });
 
     const [serviciosList, setServiciosList] = React.useState([]);
-    const [barberosList, setBarberosList] = React.useState([]);
+    const [profesionalesList, setProfesionalesList] = React.useState([]);
     const [horariosDisponibles, setHorariosDisponibles] = React.useState([]);
     const [currentDate, setCurrentDate] = React.useState(new Date());
     const [diasLaborales, setDiasLaborales] = React.useState([]);
     const [fechasConHorarios, setFechasConHorarios] = React.useState({});
 
     // ============================================
-    // DETECTAR ROL Y NIVEL DEL USUARIO AL INICIAR
+    // DETECTAR ROL DEL USUARIO
     // ============================================
     React.useEffect(() => {
-        const barberoAuth = window.getBarberoAutenticado?.();
-        if (barberoAuth) {
-            console.log('👤 Usuario detectado como barbero:', barberoAuth);
-            setUserRole('barbero');
-            setBarbero(barberoAuth);
-            setUserNivel(barberoAuth.nivel || 1);
+        const profesionalAuth = window.getProfesionalAutenticado?.();
+        if (profesionalAuth) {
+            console.log('👩‍🎨 Usuario detectado como profesional:', profesionalAuth);
+            setUserRole('profesional');
+            setProfesional(profesionalAuth);
+            setUserNivel(profesionalAuth.nivel || 1);
             
             setNuevaReservaData(prev => ({
                 ...prev,
-                barbero_id: barberoAuth.id
+                profesional_id: profesionalAuth.id
             }));
         } else {
-            console.log('👑 Usuario detectado como admin');
+            console.log('👑 Usuario detectado como dueña');
             setUserRole('admin');
             setUserNivel(3);
         }
     }, []);
 
-    // Cargar datos para el modal
     React.useEffect(() => {
         const cargarDatosModal = async () => {
             if (window.salonServicios) {
                 const servicios = await window.salonServicios.getAll(true);
                 setServiciosList(servicios || []);
             }
-            if (window.salonBarberos) {
-                const barberos = await window.salonBarberos.getAll(true);
-                setBarberosList(barberos || []);
+            if (window.salonProfesionales) {
+                const profesionales = await window.salonProfesionales.getAll(true);
+                setProfesionalesList(profesionales || []);
             }
         };
         cargarDatosModal();
     }, []);
 
-    // Cargar días laborales cuando se selecciona barbero
     React.useEffect(() => {
         const cargarDiasLaborales = async () => {
-            if (nuevaReservaData.barbero_id) {
+            if (nuevaReservaData.profesional_id) {
                 try {
-                    const horarios = await window.salonConfig.getHorariosBarbero(nuevaReservaData.barbero_id);
+                    const horarios = await window.salonConfig.getHorariosProfesional(nuevaReservaData.profesional_id);
                     setDiasLaborales(horarios.dias || []);
                     
-                    await cargarDisponibilidadMes(currentDate, nuevaReservaData.barbero_id);
+                    await cargarDisponibilidadMes(currentDate, nuevaReservaData.profesional_id);
                 } catch (error) {
                     console.error('Error cargando días laborales:', error);
                     setDiasLaborales([]);
@@ -336,14 +310,11 @@ function AdminApp() {
             }
         };
         cargarDiasLaborales();
-    }, [nuevaReservaData.barbero_id]);
+    }, [nuevaReservaData.profesional_id]);
 
-    // ============================================
-    // FUNCIÓN PARA CARGAR HORARIOS DISPONIBLES
-    // ============================================
     React.useEffect(() => {
         const cargarHorarios = async () => {
-            if (!nuevaReservaData.barbero_id || !nuevaReservaData.fecha || !nuevaReservaData.servicio) {
+            if (!nuevaReservaData.profesional_id || !nuevaReservaData.fecha || !nuevaReservaData.servicio) {
                 setHorariosDisponibles([]);
                 return;
             }
@@ -352,13 +323,13 @@ function AdminApp() {
                 const servicio = serviciosList.find(s => s.nombre === nuevaReservaData.servicio);
                 if (!servicio) return;
 
-                const horarios = await window.salonConfig.getHorariosBarbero(nuevaReservaData.barbero_id);
+                const horarios = await window.salonConfig.getHorariosProfesional(nuevaReservaData.profesional_id);
                 const horasTrabajo = horarios.horas || [];
                 
                 const slotsTrabajo = horasTrabajo.map(indice => indiceToHoraLegible(indice));
                 
                 const response = await fetch(
-                    `${window.SUPABASE_URL}/rest/v1/reservas?fecha=eq.${nuevaReservaData.fecha}&barbero_id=eq.${nuevaReservaData.barbero_id}&estado=neq.Cancelado&select=hora_inicio,hora_fin`,
+                    `${window.SUPABASE_URL}/rest/v1/reservas?fecha=eq.${nuevaReservaData.fecha}&profesional_id=eq.${nuevaReservaData.profesional_id}&estado=neq.Cancelado&select=hora_inicio,hora_fin`,
                     {
                         headers: {
                             'apikey': window.SUPABASE_ANON_KEY,
@@ -411,17 +382,16 @@ function AdminApp() {
         };
 
         cargarHorarios();
-    }, [nuevaReservaData.barbero_id, nuevaReservaData.fecha, nuevaReservaData.servicio, serviciosList]);
+    }, [nuevaReservaData.profesional_id, nuevaReservaData.fecha, nuevaReservaData.servicio, serviciosList]);
 
-    // Función para cargar disponibilidad de un mes completo
-    const cargarDisponibilidadMes = async (fecha, barberoId) => {
-        if (!barberoId) return;
+    const cargarDisponibilidadMes = async (fecha, profesionalId) => {
+        if (!profesionalId) return;
         
         try {
             const year = fecha.getFullYear();
             const month = fecha.getMonth();
             
-            const horarios = await window.salonConfig.getHorariosBarbero(barberoId);
+            const horarios = await window.salonConfig.getHorariosProfesional(profesionalId);
             const horasTrabajo = horarios.horas || [];
             
             if (horasTrabajo.length === 0) {
@@ -436,7 +406,7 @@ function AdminApp() {
             const fechaFin = ultimoDia.toISOString().split('T')[0];
             
             const response = await fetch(
-                `${window.SUPABASE_URL}/rest/v1/reservas?fecha=gte.${fechaInicio}&fecha=lte.${fechaFin}&barbero_id=eq.${barberoId}&estado=neq.Cancelado&select=fecha,hora_inicio,hora_fin`,
+                `${window.SUPABASE_URL}/rest/v1/reservas?fecha=gte.${fechaInicio}&fecha=lte.${fechaFin}&profesional_id=eq.${profesionalId}&estado=neq.Cancelado&select=fecha,hora_inicio,hora_fin`,
                 {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
@@ -496,8 +466,8 @@ function AdminApp() {
         nuevaFecha.setMonth(currentDate.getMonth() + direccion);
         setCurrentDate(nuevaFecha);
         
-        if (nuevaReservaData.barbero_id) {
-            cargarDisponibilidadMes(nuevaFecha, nuevaReservaData.barbero_id);
+        if (nuevaReservaData.profesional_id) {
+            cargarDisponibilidadMes(nuevaFecha, nuevaReservaData.profesional_id);
         }
     };
 
@@ -529,7 +499,7 @@ function AdminApp() {
     };
 
     const isDateAvailable = (date) => {
-        if (!date || !nuevaReservaData.barbero_id) return false;
+        if (!date || !nuevaReservaData.profesional_id) return false;
         
         const fechaStr = formatDate(date);
         const diaSemana = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'][date.getDay()];
@@ -548,12 +518,9 @@ function AdminApp() {
         }
     };
 
-    // ============================================
-    // FUNCIÓN PARA CREAR RESERVA MANUAL
-    // ============================================
     const handleCrearReservaManual = async () => {
         if (!nuevaReservaData.cliente_nombre || !nuevaReservaData.cliente_whatsapp || 
-            !nuevaReservaData.servicio || !nuevaReservaData.barbero_id || 
+            !nuevaReservaData.servicio || !nuevaReservaData.profesional_id || 
             !nuevaReservaData.fecha || !nuevaReservaData.hora_inicio) {
             alert('Completá todos los campos');
             return;
@@ -566,9 +533,9 @@ function AdminApp() {
                 return;
             }
             
-            const barbero = barberosList.find(b => b.id === parseInt(nuevaReservaData.barbero_id));
-            if (!barbero) {
-                alert('Barbero no encontrado');
+            const profesional = profesionalesList.find(p => p.id === parseInt(nuevaReservaData.profesional_id));
+            if (!profesional) {
+                alert('Profesional no encontrada');
                 return;
             }
             
@@ -579,8 +546,8 @@ function AdminApp() {
                 cliente_whatsapp: `53${nuevaReservaData.cliente_whatsapp.replace(/\D/g, '')}`,
                 servicio: nuevaReservaData.servicio,
                 duracion: servicio.duracion,
-                barbero_id: nuevaReservaData.barbero_id,
-                barbero_nombre: barbero.nombre,
+                profesional_id: nuevaReservaData.profesional_id,
+                profesional_nombre: profesional.nombre,
                 fecha: nuevaReservaData.fecha,
                 hora_inicio: nuevaReservaData.hora_inicio,
                 hora_fin: endTime,
@@ -599,7 +566,7 @@ function AdminApp() {
                     cliente_nombre: '',
                     cliente_whatsapp: '',
                     servicio: '',
-                    barbero_id: userRole === 'barbero' ? barbero?.id : '',
+                    profesional_id: userRole === 'profesional' ? profesional?.id : '',
                     fecha: '',
                     hora_inicio: ''
                 });
@@ -612,10 +579,6 @@ function AdminApp() {
         }
     };
 
-    // ============================================
-    // FUNCIONES DE CLIENTES
-    // ============================================
-    
     const loadClientesPendientes = async () => {
         console.log('🔄 Cargando clientes pendientes...');
         setCargandoClientes(true);
@@ -684,9 +647,9 @@ function AdminApp() {
             if (cliente) {
                 await loadClientesPendientes();
                 await loadClientesAutorizados();
-                alert(`✅ Cliente ${cliente.nombre} aprobado`);
+                alert(`✅ Cliente ${cliente.nombre} aprobada`);
                 
-                const mensaje = `✅ ¡Hola ${cliente.nombre}! Tu acceso a LAG.barberia ha sido APROBADO. Ya podés reservar turnos desde la app.`;
+                const mensaje = `✅ ¡Hola ${cliente.nombre}! Tu acceso a Rservas.Roma ha sido APROBADO. Ya podés reservar turnos desde la app.`;
                 const telefono = cliente.whatsapp.replace(/\D/g, '');
                 const encodedText = encodeURIComponent(mensaje);
                 window.open(`https://api.whatsapp.com/send?phone=${telefono}&text=${encodedText}`, '_blank');
@@ -716,7 +679,7 @@ function AdminApp() {
     };
 
     const handleEliminarAutorizado = async (whatsapp) => {
-        if (!confirm('¿Seguro que querés eliminar este cliente autorizado? Perderá el acceso a la app.')) return;
+        if (!confirm('¿Seguro que querés eliminar esta cliente autorizada? Perderá el acceso a la app.')) return;
         console.log('🗑️ Eliminando autorizado:', whatsapp);
         try {
             if (typeof window.eliminarClienteAutorizado !== 'function') {
@@ -726,7 +689,7 @@ function AdminApp() {
             const resultado = await window.eliminarClienteAutorizado(whatsapp);
             if (resultado) {
                 await loadClientesAutorizados();
-                alert(`✅ Cliente eliminado`);
+                alert(`✅ Cliente eliminada`);
             }
         } catch (error) {
             console.error('Error eliminando autorizado:', error);
@@ -734,17 +697,14 @@ function AdminApp() {
         }
     };
 
-    // ============================================
-    // FUNCIONES DE RESERVAS (ACTUALIZADA)
-    // ============================================
     const fetchBookings = async () => {
         setLoading(true);
         try {
             let data;
             
-            if (userRole === 'barbero' && barbero) {
-                console.log(`📋 Cargando reservas de barbero ${barbero.id}...`);
-                data = await window.getReservasPorBarbero?.(barbero.id, false) || [];
+            if (userRole === 'profesional' && profesional) {
+                console.log(`📋 Cargando reservas de profesional ${profesional.id}...`);
+                data = await window.getReservasPorProfesional?.(profesional.id, false) || [];
             } else {
                 data = await getAllBookings();
             }
@@ -752,12 +712,10 @@ function AdminApp() {
             if (Array.isArray(data)) {
                 data.sort((a, b) => a.fecha.localeCompare(b.fecha) || a.hora_inicio.localeCompare(b.hora_inicio));
                 
-                // 🔥 Verificar si hay turnos que deban ser completados
                 await marcarTurnosCompletados();
                 
-                // Recargar datos después de marcar completados
-                if (userRole === 'barbero' && barbero) {
-                    data = await window.getReservasPorBarbero?.(barbero.id, false) || [];
+                if (userRole === 'profesional' && profesional) {
+                    data = await window.getReservasPorProfesional?.(profesional.id, false) || [];
                 } else {
                     data = await getAllBookings();
                 }
@@ -774,7 +732,6 @@ function AdminApp() {
         }
     };
 
-    // 🔥 EFECTO PARA VERIFICAR CADA MINUTO
     React.useEffect(() => {
         const intervalo = setInterval(() => {
             console.log('⏰ Verificando turnos para completar...');
@@ -783,7 +740,7 @@ function AdminApp() {
                 fetchBookings();
             });
             
-        }, 60000); // Cada 60 segundos
+        }, 60000);
         
         return () => clearInterval(intervalo);
     }, []);
@@ -791,31 +748,30 @@ function AdminApp() {
     React.useEffect(() => {
         fetchBookings();
         
-        if (userRole === 'admin' || (userRole === 'barbero' && userNivel >= 2)) {
+        if (userRole === 'admin' || (userRole === 'profesional' && userNivel >= 2)) {
             loadClientesAutorizados();
         }
         
         console.log('🔍 Verificando auth:', {
             userRole,
             userNivel,
-            barbero
+            profesional
         });
-    }, [userRole, userNivel, barbero]);
+    }, [userRole, userNivel, profesional]);
 
     const handleCancel = async (id, bookingData) => {
-    if (!confirm(`¿Cancelar reserva de ${bookingData.cliente_nombre}?`)) return;
-    
-    const ok = await cancelBooking(id);
-    if (ok) {
-        enviarCancelacionWhatsApp(bookingData);
+        if (!confirm(`¿Cancelar reserva de ${bookingData.cliente_nombre}?`)) return;
         
-        // 🔥 NOTIFICAR AL DUEÑO POR NTFY
-        try {
-            const fechaConDia = window.formatFechaCompleta ? 
-                window.formatFechaCompleta(bookingData.fecha) : 
-                bookingData.fecha;
+        const ok = await cancelBooking(id);
+        if (ok) {
+            enviarCancelacionWhatsApp(bookingData);
             
-            const mensajeLimpio = 
+            try {
+                const fechaConDia = window.formatFechaCompleta ? 
+                    window.formatFechaCompleta(bookingData.fecha) : 
+                    bookingData.fecha;
+                
+                const mensajeLimpio = 
 `CANCELACION POR ADMIN
 
 Cliente: ${bookingData.cliente_nombre}
@@ -823,46 +779,45 @@ WhatsApp: ${bookingData.cliente_whatsapp}
 Servicio: ${bookingData.servicio}
 Fecha: ${fechaConDia}
 Hora: ${formatTo12Hour(bookingData.hora_inicio)}
-Barbero: ${bookingData.barbero_nombre || bookingData.trabajador_nombre || 'No asignado'}
+Profesional: ${bookingData.profesional_nombre || bookingData.trabajador_nombre || 'No asignada'}
 
-El administrador cancelo la reserva.`;
+La administradora canceló la reserva.`;
 
-            fetch('https://ntfy.sh/lag-barberia', {
-                method: 'POST',
-                body: mensajeLimpio,
-                headers: {
-                    'Title': 'Cancelacion por admin - LAG.barberia',
-                    'Priority': 'default',
-                    'Tags': 'x'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    console.log('✅ Notificación de cancelación enviada');
-                }
-            })
-            .catch(error => {
-                console.error('❌ Error enviando notificación:', error);
-            });
+                fetch('https://ntfy.sh/rservas-roma', {
+                    method: 'POST',
+                    body: mensajeLimpio,
+                    headers: {
+                        'Title': 'Cancelación por admin - Rservas.Roma',
+                        'Priority': 'default',
+                        'Tags': 'x'
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('✅ Notificación de cancelación enviada');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error enviando notificación:', error);
+                });
+                
+            } catch (error) {
+                console.error('Error enviando notificación:', error);
+            }
             
-        } catch (error) {
-            console.error('Error enviando notificación:', error);
+            alert('✅ Reserva cancelada y cliente notificada');
+            fetchBookings();
+        } else {
+            alert('❌ Error al cancelar');
         }
-        
-        alert('✅ Reserva cancelada y cliente notificado');
-        fetchBookings();
-    } else {
-        alert('❌ Error al cancelar');
-    }
-};
+    };
 
-    // 🔥 FUNCIÓN DE LOGOUT ACTUALIZADA
     const handleLogout = () => {
         if (confirm('¿Cerrar sesión?')) {
             localStorage.removeItem('adminAuth');
             localStorage.removeItem('adminUser');
             localStorage.removeItem('adminLoginTime');
-            localStorage.removeItem('barberoAuth');
+            localStorage.removeItem('profesionalAuth');
             localStorage.removeItem('userRole');
             
             console.log('🚪 Sesión cerrada, redirigiendo a la app de clientes');
@@ -870,20 +825,13 @@ El administrador cancelo la reserva.`;
         }
     };
 
-    // ============================================
-    // FILTROS (ACTUALIZADO CON COMPLETADAS)
-    // ============================================
     const getFilteredBookings = () => {
         console.log('🔄 Aplicando filtros a', bookings.length, 'reservas');
         
-        // PASO 1: Filtrar por fecha (si hay filtro activo)
         let filtradas = filterDate
             ? bookings.filter(b => b.fecha === filterDate)
             : [...bookings];
         
-        console.log('📊 Después filtro fecha:', filtradas.length);
-        
-        // PASO 2: Aplicar filtro de estado seleccionado
         let resultado;
         if (statusFilter === 'activas') {
             resultado = filtradas.filter(b => b.estado === 'Reservado');
@@ -891,11 +839,9 @@ El administrador cancelo la reserva.`;
             resultado = filtradas.filter(b => b.estado === 'Completado');
         } else if (statusFilter === 'canceladas') {
             resultado = filtradas.filter(b => b.estado === 'Cancelado');
-        } else { // 'todas'
+        } else {
             resultado = filtradas;
         }
-        
-        console.log('📊 Resultado final:', resultado.length);
         
         return resultado;
     };
@@ -907,16 +853,16 @@ El administrador cancelo la reserva.`;
 
     const getTabsDisponibles = () => {
         const tabs = [];
-        tabs.push({ id: 'reservas', icono: '📅', label: userRole === 'barbero' ? 'Mis Reservas' : 'Reservas' });
+        tabs.push({ id: 'reservas', icono: '📅', label: userRole === 'profesional' ? 'Mis Turnos' : 'Reservas' });
         
-        if (userRole === 'admin' || (userRole === 'barbero' && userNivel >= 2)) {
+        if (userRole === 'admin' || (userRole === 'profesional' && userNivel >= 2)) {
             tabs.push({ id: 'configuracion', icono: '⚙️', label: 'Configuración' });
-            tabs.push({ id: 'clientes', icono: '👤', label: 'Clientes' });
+            tabs.push({ id: 'clientes', icono: '👤', label: 'Clientas' });
         }
         
-        if (userRole === 'admin' || (userRole === 'barbero' && userNivel >= 3)) {
-            tabs.push({ id: 'servicios', icono: '💈', label: 'Servicios' });
-            tabs.push({ id: 'barberos', icono: '👥', label: 'Barberos' });
+        if (userRole === 'admin' || (userRole === 'profesional' && userNivel >= 3)) {
+            tabs.push({ id: 'servicios', icono: '💅', label: 'Servicios' });
+            tabs.push({ id: 'profesionales', icono: '👩‍🎨', label: 'Profesionales' });
         }
         
         return tabs;
@@ -927,7 +873,7 @@ El administrador cancelo la reserva.`;
             cliente_nombre: '',
             cliente_whatsapp: '',
             servicio: '',
-            barbero_id: userRole === 'barbero' ? barbero?.id : '',
+            profesional_id: userRole === 'profesional' ? profesional?.id : '',
             fecha: '',
             hora_inicio: ''
         });
@@ -949,21 +895,21 @@ El administrador cancelo la reserva.`;
                 <div className="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center flex-wrap gap-2">
                     <div>
                         <h1 className="text-xl font-bold">
-                            {userRole === 'barbero' 
-                                ? `Panel de ${barbero?.nombre}`
-                                : 'Panel Admin - LAG.barberia'
+                            {userRole === 'profesional' 
+                                ? `Panel de ${profesional?.nombre}`
+                                : 'Panel Admin - Rservas.Roma'
                             }
                         </h1>
-                        {userRole === 'barbero' && (
+                        {userRole === 'profesional' && (
                             <p className="text-xs mt-1">
                                 <span className={`px-2 py-0.5 rounded-full ${
                                     userNivel === 1 ? 'bg-gray-100 text-gray-600' :
                                     userNivel === 2 ? 'bg-blue-100 text-blue-600' :
                                     'bg-purple-100 text-purple-600'
                                 }`}>
-                                    {userNivel === 1 && '🔰 Nivel Básico'}
-                                    {userNivel === 2 && '⭐ Nivel Intermedio'}
-                                    {userNivel === 3 && '👑 Nivel Avanzado'}
+                                    {userNivel === 1 && '🔰 Principiante'}
+                                    {userNivel === 2 && '⭐ Intermedia'}
+                                    {userNivel === 3 && '👑 Experta'}
                                 </span>
                             </p>
                         )}
@@ -972,7 +918,7 @@ El administrador cancelo la reserva.`;
                         <button
                             onClick={abrirModalNuevaReserva}
                             className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition transform hover:scale-105 shadow-md"
-                            title="Crear reserva para un cliente"
+                            title="Crear reserva para una clienta"
                         >
                             <span>📅</span>
                             <span className="hidden sm:inline">Nueva Reserva</span>
@@ -1009,24 +955,22 @@ El administrador cancelo la reserva.`;
                             </div>
 
                             <div className="space-y-4">
-                                {/* Nombre del cliente */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Nombre del Cliente *
+                                        Nombre de la Cliente *
                                     </label>
                                     <input
                                         type="text"
                                         value={nuevaReservaData.cliente_nombre}
                                         onChange={(e) => setNuevaReservaData({...nuevaReservaData, cliente_nombre: e.target.value})}
                                         className="w-full border rounded-lg px-3 py-2"
-                                        placeholder="Ej: Juan Pérez"
+                                        placeholder="Ej: María Pérez"
                                     />
                                 </div>
 
-                                {/* WhatsApp del cliente */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        WhatsApp del Cliente *
+                                        WhatsApp de la Cliente *
                                     </label>
                                     <div className="flex">
                                         <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">
@@ -1046,7 +990,6 @@ El administrador cancelo la reserva.`;
                                     <p className="text-xs text-gray-400 mt-1">8 dígitos después del +53</p>
                                 </div>
 
-                                {/* Selección de servicio */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Servicio *
@@ -1065,35 +1008,33 @@ El administrador cancelo la reserva.`;
                                     </select>
                                 </div>
 
-                                {/* Selección de barbero */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Barbero *
+                                        Profesional *
                                     </label>
-                                    {userRole === 'barbero' && userNivel <= 2 ? (
+                                    {userRole === 'profesional' && userNivel <= 2 ? (
                                         <div className="bg-blue-50 p-3 rounded-lg">
                                             <p className="text-sm text-blue-700">
-                                                Reserva asignada a vos: <strong>{barbero?.nombre}</strong>
+                                                Reserva asignada a vos: <strong>{profesional?.nombre}</strong>
                                             </p>
                                         </div>
                                     ) : (
                                         <select
-                                            value={nuevaReservaData.barbero_id}
-                                            onChange={(e) => setNuevaReservaData({...nuevaReservaData, barbero_id: e.target.value})}
+                                            value={nuevaReservaData.profesional_id}
+                                            onChange={(e) => setNuevaReservaData({...nuevaReservaData, profesional_id: e.target.value})}
                                             className="w-full border rounded-lg px-3 py-2"
                                         >
-                                            <option value="">Seleccionar barbero</option>
-                                            {barberosList.map(b => (
-                                                <option key={b.id} value={b.id}>
-                                                    {b.nombre} - {b.especialidad}
+                                            <option value="">Seleccionar profesional</option>
+                                            {profesionalesList.map(p => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.nombre} - {p.especialidad}
                                                 </option>
                                             ))}
                                         </select>
                                     )}
                                 </div>
 
-                                {/* Calendario de fechas */}
-                                {nuevaReservaData.barbero_id && (
+                                {nuevaReservaData.profesional_id && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
                                             Fecha *
@@ -1137,11 +1078,11 @@ El administrador cancelo la reserva.`;
                                                         let className = "h-10 w-full flex items-center justify-center rounded-lg text-sm font-medium transition-all relative";
                                                         
                                                         if (selected) {
-                                                            className += " bg-amber-600 text-white shadow-md ring-2 ring-amber-300";
+                                                            className += " bg-pink-600 text-white shadow-md ring-2 ring-pink-300";
                                                         } else if (!available) {
                                                             className += " text-gray-300 cursor-not-allowed bg-gray-50";
                                                         } else {
-                                                            className += " text-gray-700 hover:bg-amber-50 hover:text-amber-600 hover:scale-105 cursor-pointer";
+                                                            className += " text-gray-700 hover:bg-pink-50 hover:text-pink-600 hover:scale-105 cursor-pointer";
                                                         }
                                                         
                                                         return (
@@ -1161,7 +1102,6 @@ El administrador cancelo la reserva.`;
                                     </div>
                                 )}
 
-                                {/* Horarios disponibles */}
                                 {nuevaReservaData.fecha && (
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1176,7 +1116,7 @@ El administrador cancelo la reserva.`;
                                                         onClick={() => setNuevaReservaData({...nuevaReservaData, hora_inicio: hora})}
                                                         className={`py-2 px-3 rounded-lg text-sm font-medium transition ${
                                                             nuevaReservaData.hora_inicio === hora
-                                                                ? 'bg-amber-600 text-white'
+                                                                ? 'bg-pink-600 text-white'
                                                                 : 'bg-gray-100 hover:bg-gray-200'
                                                         }`}
                                                     >
@@ -1192,7 +1132,6 @@ El administrador cancelo la reserva.`;
                                     </div>
                                 )}
 
-                                {/* Botones de acción */}
                                 <div className="flex gap-3 pt-4">
                                     <button
                                         onClick={() => setShowNuevaReservaModal(false)}
@@ -1220,7 +1159,7 @@ El administrador cancelo la reserva.`;
                             onClick={() => setTabActivo(tab.id)}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                                 tabActivo === tab.id 
-                                    ? 'bg-amber-600 text-white shadow-md scale-105' 
+                                    ? 'bg-pink-600 text-white shadow-md scale-105' 
                                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                             }`}
                         >
@@ -1233,8 +1172,8 @@ El administrador cancelo la reserva.`;
                 {/* CONTENIDO */}
                 {tabActivo === 'configuracion' && (
                     <ConfigPanel 
-                        barberoId={userRole === 'barbero' ? barbero?.id : null}
-                        modoRestringido={userRole === 'barbero' && userNivel === 2}
+                        profesionalId={userRole === 'profesional' ? profesional?.id : null}
+                        modoRestringido={userRole === 'profesional' && userNivel === 2}
                     />
                 )}
 
@@ -1242,8 +1181,8 @@ El administrador cancelo la reserva.`;
                     <ServiciosPanel />
                 )}
 
-                {tabActivo === 'barberos' && (userRole === 'admin' || userNivel >= 3) && (
-                    <BarberosPanel />
+                {tabActivo === 'profesionales' && (userRole === 'admin' || userNivel >= 3) && (
+                    <ProfesionalesPanel />
                 )}
 
                 {tabActivo === 'clientes' && (userRole === 'admin' || userNivel >= 2) && (
@@ -1255,7 +1194,6 @@ El administrador cancelo la reserva.`;
                             </div>
                         )}
 
-                        {/* CLIENTES AUTORIZADOS */}
                         <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-green-500">
                             <button
                                 onClick={() => {
@@ -1266,7 +1204,7 @@ El administrador cancelo la reserva.`;
                             >
                                 <div className="flex items-center gap-2">
                                     <span>✅</span>
-                                    <span className="font-medium">Clientes Autorizados</span>
+                                    <span className="font-medium">Clientas Autorizadas</span>
                                     <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
                                         {clientesAutorizados.length}
                                     </span>
@@ -1279,7 +1217,7 @@ El administrador cancelo la reserva.`;
                                     <div className="space-y-3 max-h-80 overflow-y-auto">
                                         {clientesAutorizados.length === 0 ? (
                                             <div className="text-center py-6 text-gray-500">
-                                                <p>No hay clientes autorizados</p>
+                                                <p>No hay clientas autorizadas</p>
                                             </div>
                                         ) : (
                                             clientesAutorizados.map((cliente, index) => (
@@ -1306,7 +1244,6 @@ El administrador cancelo la reserva.`;
                             )}
                         </div>
 
-                        {/* CLIENTES PENDIENTES */}
                         {(userRole === 'admin' || userNivel >= 3) && (
                             <div className="bg-white p-4 rounded-xl shadow-sm border-l-4 border-yellow-500">
                                 <button
@@ -1372,10 +1309,10 @@ El administrador cancelo la reserva.`;
                 {/* RESERVAS */}
                 {tabActivo === 'reservas' && (
                     <>
-                        {userRole === 'barbero' && barbero && (
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p className="text-blue-800 font-medium">
-                                    Hola {barbero.nombre} 👋 - Mostrando tus reservas ({filteredBookings.length})
+                        {userRole === 'profesional' && profesional && (
+                            <div className="bg-pink-50 border border-pink-200 rounded-lg p-4">
+                                <p className="text-pink-800 font-medium">
+                                    Hola {profesional.nombre} 👋 - Mostrando tus turnos ({filteredBookings.length})
                                 </p>
                             </div>
                         )}
@@ -1444,7 +1381,7 @@ El administrador cancelo la reserva.`;
 
                         {loading ? (
                             <div className="text-center py-12">
-                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
                                 <p className="text-gray-500 mt-4">Cargando reservas...</p>
                             </div>
                         ) : (
@@ -1461,7 +1398,7 @@ El administrador cancelo la reserva.`;
                                 ) : (
                                     filteredBookings.map(b => (
                                         <div key={b.id} className={`bg-white p-4 rounded-xl shadow-sm border-l-4 ${
-                                            b.estado === 'Reservado' ? 'border-l-amber-500' :
+                                            b.estado === 'Reservado' ? 'border-l-pink-500' :
                                             b.estado === 'Completado' ? 'border-l-green-500' :
                                             'border-l-red-500'
                                         }`}>
@@ -1469,15 +1406,15 @@ El administrador cancelo la reserva.`;
                                                 <span className="font-semibold">
                                                     {window.formatFechaCompleta ? window.formatFechaCompleta(b.fecha) : b.fecha}
                                                 </span>
-                                                <span className="text-sm bg-amber-100 text-amber-700 px-2 py-1 rounded-full">
+                                                <span className="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded-full">
                                                     {formatTo12Hour(b.hora_inicio)}
                                                 </span>
                                             </div>
                                             <div className="text-sm space-y-1">
                                                 <p><span className="font-medium">👤 Cliente:</span> {b.cliente_nombre}</p>
                                                 <p><span className="font-medium">📱 WhatsApp:</span> {b.cliente_whatsapp}</p>
-                                                <p><span className="font-medium">💈 Servicio:</span> {b.servicio}</p>
-                                                <p><span className="font-medium">👨‍🎨 Barbero:</span> {b.barbero_nombre || b.trabajador_nombre}</p>
+                                                <p><span className="font-medium">💅 Servicio:</span> {b.servicio}</p>
+                                                <p><span className="font-medium">👩‍🎨 Profesional:</span> {b.profesional_nombre || b.trabajador_nombre}</p>
                                             </div>
                                             <div className="flex justify-between items-center mt-3 pt-2 border-t">
                                                 <span className={`px-2 py-1 rounded-full text-xs font-semibold

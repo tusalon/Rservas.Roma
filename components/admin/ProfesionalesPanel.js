@@ -1,65 +1,79 @@
-// components/admin/BarberosPanel.js - Para LAG.barberia
+// components/admin/ProfesionalesPanel.js - Gestión de profesionales para salón de belleza
 
-function BarberosPanel() {
-    const [barberos, setBarberos] = React.useState([]);
+function ProfesionalesPanel() {
+    const [profesionales, setProfesionales] = React.useState([]);
     const [mostrarForm, setMostrarForm] = React.useState(false);
     const [editando, setEditando] = React.useState(null);
     const [cargando, setCargando] = React.useState(true);
 
     React.useEffect(() => {
-        cargarBarberos();
+        cargarProfesionales();
     }, []);
 
-    const cargarBarberos = async () => {
+    const cargarProfesionales = async () => {
         setCargando(true);
         try {
-            console.log('📋 Cargando barberos...');
-            if (window.salonBarberos) {
-                const lista = await window.salonBarberos.getAll(false);
-                console.log('✅ Barberos obtenidos:', lista);
-                setBarberos(lista || []);
+            console.log('📋 Cargando profesionales...');
+            if (window.salonProfesionales) {
+                const lista = await window.salonProfesionales.getAll(false);
+                console.log('✅ Profesionales obtenidas:', lista);
+                setProfesionales(lista || []);
+            } else {
+                const response = await fetch(
+                    `${window.SUPABASE_URL}/rest/v1/profesionales?select=*&order=nombre.asc`,
+                    {
+                        headers: {
+                            'apikey': window.SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                        }
+                    }
+                );
+                if (response.ok) {
+                    const data = await response.json();
+                    setProfesionales(data || []);
+                }
             }
         } catch (error) {
-            console.error('Error cargando barberos:', error);
+            console.error('Error cargando profesionales:', error);
         } finally {
             setCargando(false);
         }
     };
 
-    const handleGuardar = async (barbero) => {
+    const handleGuardar = async (profesional) => {
         try {
-            console.log('💾 Guardando barbero:', barbero);
+            console.log('💾 Guardando profesional:', profesional);
             if (editando) {
-                await window.salonBarberos.actualizar(editando.id, barbero);
+                await window.salonProfesionales.actualizar(editando.id, profesional);
             } else {
-                await window.salonBarberos.crear(barbero);
+                await window.salonProfesionales.crear(profesional);
             }
-            await cargarBarberos();
+            await cargarProfesionales();
             setMostrarForm(false);
             setEditando(null);
         } catch (error) {
-            console.error('Error guardando barbero:', error);
-            alert('Error al guardar el barbero');
+            console.error('Error guardando profesional:', error);
+            alert('Error al guardar la profesional');
         }
     };
 
     const handleEliminar = async (id) => {
-        if (!confirm('¿Eliminar este barbero?')) return;
+        if (!confirm('¿Eliminar esta profesional?')) return;
         try {
-            console.log('🗑️ Eliminando barbero:', id);
-            await window.salonBarberos.eliminar(id);
-            await cargarBarberos();
+            console.log('🗑️ Eliminando profesional:', id);
+            await window.salonProfesionales.eliminar(id);
+            await cargarProfesionales();
         } catch (error) {
-            console.error('Error eliminando barbero:', error);
-            alert('Error al eliminar el barbero');
+            console.error('Error eliminando profesional:', error);
+            alert('Error al eliminar la profesional');
         }
     };
 
     const toggleActivo = async (id) => {
-        const barbero = barberos.find(b => b.id === id);
+        const profesional = profesionales.find(p => p.id === id);
         try {
-            await window.salonBarberos.actualizar(id, { activo: !barbero.activo });
-            await cargarBarberos();
+            await window.salonProfesionales.actualizar(id, { activo: !profesional.activo });
+            await cargarProfesionales();
         } catch (error) {
             console.error('Error cambiando estado:', error);
         }
@@ -67,10 +81,10 @@ function BarberosPanel() {
 
     const getNivelNombre = (nivel) => {
         switch(nivel) {
-            case 1: return '🔰 Básico';
-            case 2: return '⭐ Intermedio';
-            case 3: return '👑 Avanzado';
-            default: return '🔰 Básico';
+            case 1: return '🔰 Principiante';
+            case 2: return '⭐ Intermedia';
+            case 3: return '👑 Experta';
+            default: return '🔰 Principiante';
         }
     };
 
@@ -78,8 +92,8 @@ function BarberosPanel() {
         return (
             <div className="bg-white rounded-xl shadow-sm p-6">
                 <div className="text-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto"></div>
-                    <p className="text-gray-500 mt-4">Cargando barberos...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500 mx-auto"></div>
+                    <p className="text-gray-500 mt-4">Cargando profesionales...</p>
                 </div>
             </div>
         );
@@ -88,21 +102,21 @@ function BarberosPanel() {
     return (
         <div className="bg-white rounded-xl shadow-sm p-6">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold">👥 Barberos</h2>
+                <h2 className="text-xl font-bold">💅 Profesionales</h2>
                 <button
                     onClick={() => {
                         setEditando(null);
                         setMostrarForm(true);
                     }}
-                    className="bg-amber-600 text-white px-4 py-2 rounded-lg hover:bg-amber-700"
+                    className="bg-pink-600 text-white px-4 py-2 rounded-lg hover:bg-pink-700"
                 >
-                    + Nuevo Barbero
+                    + Nueva Profesional
                 </button>
             </div>
 
             {mostrarForm && (
-                <BarberoForm
-                    barbero={editando}
+                <ProfesionalForm
+                    profesional={editando}
                     onGuardar={handleGuardar}
                     onCancelar={() => {
                         setMostrarForm(false);
@@ -112,47 +126,47 @@ function BarberosPanel() {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {barberos.length === 0 ? (
+                {profesionales.length === 0 ? (
                     <div className="col-span-2 text-center py-8 text-gray-500">
-                        No hay barberos cargados
+                        No hay profesionales cargadas
                     </div>
                 ) : (
-                    barberos.map(b => (
-                        <div key={b.id} className={`border rounded-lg p-4 ${b.activo ? '' : 'opacity-50 bg-gray-50'}`}>
+                    profesionales.map(p => (
+                        <div key={p.id} className={`border rounded-lg p-4 ${p.activo ? '' : 'opacity-50 bg-gray-50'}`}>
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-12 h-12 ${b.color || 'bg-amber-600'} rounded-full flex items-center justify-center text-2xl`}>
-                                        {b.avatar || '👨‍🎨'}
+                                    <div className={`w-12 h-12 ${p.color || 'bg-pink-600'} rounded-full flex items-center justify-center text-2xl`}>
+                                        {p.avatar || '💅'}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold text-lg">{b.nombre}</h3>
+                                            <h3 className="font-semibold text-lg">{p.nombre}</h3>
                                             <button
-                                                onClick={() => toggleActivo(b.id)}
+                                                onClick={() => toggleActivo(p.id)}
                                                 className={`text-xs px-2 py-1 rounded-full ${
-                                                    b.activo 
+                                                    p.activo 
                                                         ? 'bg-green-100 text-green-700' 
                                                         : 'bg-gray-200 text-gray-600'
                                                 }`}
                                             >
-                                                {b.activo ? 'Activo' : 'Inactivo'}
+                                                {p.activo ? 'Activa' : 'Inactiva'}
                                             </button>
                                         </div>
-                                        <p className="text-sm text-gray-600">{b.especialidad}</p>
+                                        <p className="text-sm text-gray-600">{p.especialidad}</p>
                                         
                                         <p className="text-xs mt-1">
                                             <span className={`px-2 py-0.5 rounded-full ${
-                                                b.nivel === 1 ? 'bg-gray-100 text-gray-600' :
-                                                b.nivel === 2 ? 'bg-blue-100 text-blue-600' :
+                                                p.nivel === 1 ? 'bg-gray-100 text-gray-600' :
+                                                p.nivel === 2 ? 'bg-blue-100 text-blue-600' :
                                                 'bg-purple-100 text-purple-600'
                                             }`}>
-                                                {getNivelNombre(b.nivel)}
+                                                {getNivelNombre(p.nivel)}
                                             </span>
                                         </p>
                                         
-                                        {b.telefono && (
+                                        {p.telefono && (
                                             <p className="text-xs text-gray-500 mt-1">
-                                                📱 {b.telefono}
+                                                📱 {p.telefono}
                                             </p>
                                         )}
                                     </div>
@@ -160,7 +174,7 @@ function BarberosPanel() {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => {
-                                            setEditando(b);
+                                            setEditando(p);
                                             setMostrarForm(true);
                                         }}
                                         className="text-blue-600 hover:text-blue-800"
@@ -168,7 +182,7 @@ function BarberosPanel() {
                                         ✏️
                                     </button>
                                     <button
-                                        onClick={() => handleEliminar(b.id)}
+                                        onClick={() => handleEliminar(p.id)}
                                         className="text-red-600 hover:text-red-800"
                                     >
                                         🗑️
@@ -183,31 +197,31 @@ function BarberosPanel() {
     );
 }
 
-function BarberoForm({ barbero, onGuardar, onCancelar }) {
-    const [form, setForm] = React.useState(barbero || {
+function ProfesionalForm({ profesional, onGuardar, onCancelar }) {
+    const [form, setForm] = React.useState(profesional || {
         nombre: '',
         especialidad: '',
         telefono: '',
         password: '',
         nivel: 1,
-        color: 'bg-amber-600',
-        avatar: '👨‍🎨'
+        color: 'bg-pink-600',
+        avatar: '💅'
     });
 
-    const avatares = ['👨‍🎨', '💈', '✂️', '👑', '⭐', '🔰'];
+    const avatares = ['💅', '💇‍♀️', '👁️', '💄', '✨', '🌸', '🌟', '💫'];
     const colores = [
+        { value: 'bg-pink-600', label: 'Rosa' },
+        { value: 'bg-purple-600', label: 'Púrpura' },
         { value: 'bg-amber-600', label: 'Ámbar' },
-        { value: 'bg-amber-700', label: 'Ámbar Oscuro' },
-        { value: 'bg-amber-800', label: 'Marrón' },
-        { value: 'bg-gray-600', label: 'Gris' },
-        { value: 'bg-blue-600', label: 'Azul' },
-        { value: 'bg-green-600', label: 'Verde' }
+        { value: 'bg-rose-600', label: 'Rosado' },
+        { value: 'bg-emerald-600', label: 'Esmeralda' },
+        { value: 'bg-blue-600', label: 'Azul' }
     ];
     
     const niveles = [
-        { value: 1, label: '🔰 Básico - Solo ver reservas', desc: 'Acceso limitado a reservas' },
-        { value: 2, label: '⭐ Intermedio - Reservas + Configuración propia + Clientes', desc: 'Puede ver configuración (solo sus horarios) y clientes' },
-        { value: 3, label: '👑 Avanzado - Acceso total', desc: 'Puede gestionar todo como el dueño' }
+        { value: 1, label: '🔰 Principiante', desc: 'Solo ver sus turnos' },
+        { value: 2, label: '⭐ Intermedia', desc: 'Ver turnos + configuración propia' },
+        { value: 3, label: '👑 Experta', desc: 'Acceso completo como la dueña' }
     ];
 
     const handleSubmit = (e) => {
@@ -218,13 +232,13 @@ function BarberoForm({ barbero, onGuardar, onCancelar }) {
     return (
         <form onSubmit={handleSubmit} className="mb-6 p-4 bg-gray-50 rounded-lg">
             <h3 className="font-semibold mb-4">
-                {barbero ? '✏️ Editar Barbero' : '➕ Nuevo Barbero'}
+                {profesional ? '✏️ Editar Profesional' : '➕ Nueva Profesional'}
             </h3>
             
             <div className="space-y-3">
                 <input
                     type="text"
-                    placeholder="Nombre"
+                    placeholder="Nombre completo"
                     value={form.nombre}
                     onChange={(e) => setForm({...form, nombre: e.target.value})}
                     className="w-full border rounded-lg px-3 py-2"
@@ -233,7 +247,7 @@ function BarberoForm({ barbero, onGuardar, onCancelar }) {
                 
                 <input
                     type="text"
-                    placeholder="Especialidad"
+                    placeholder="Especialidad (ej: Manicurista)"
                     value={form.especialidad}
                     onChange={(e) => setForm({...form, especialidad: e.target.value})}
                     className="w-full border rounded-lg px-3 py-2"
@@ -273,7 +287,7 @@ function BarberoForm({ barbero, onGuardar, onCancelar }) {
                                 const value = e.target.value.replace(/\D/g, '');
                                 setForm({...form, telefono: value});
                             }}
-                            className="w-full px-4 py-2 rounded-r-lg border border-gray-300 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
+                            className="w-full px-4 py-2 rounded-r-lg border border-gray-300 focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition"
                             placeholder="53357234"
                         />
                     </div>
@@ -324,7 +338,7 @@ function BarberoForm({ barbero, onGuardar, onCancelar }) {
             
             <div className="flex justify-end gap-2 mt-4">
                 <button type="button" onClick={onCancelar} className="px-4 py-2 border rounded-lg hover:bg-gray-100">Cancelar</button>
-                <button type="submit" className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Guardar</button>
+                <button type="submit" className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">Guardar</button>
             </div>
         </form>
     );

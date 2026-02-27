@@ -86,7 +86,7 @@
 <body>
     <div id="root"></div>
 
-    <!-- Scripts con rutas ABSOLUTAS y timestamp para forzar actualización -->
+    <!-- Scripts con rutas ABSOLUTAS y timestamp -->
     <script type="text/javascript" src="/Rservas.Roma/utils/supabase-config.js?v=202402261530"></script>
     <script type="text/javascript" src="/Rservas.Roma/utils/storage.js?v=202402261530"></script>
 
@@ -108,7 +108,7 @@
     <script type="text/javascript" src="/Rservas.Roma/utils/auth-barberos.js?v=202402261530"></script>
     <script type="text/javascript" src="/Rservas.Roma/utils/config.js?v=202402261530"></script>
     <script type="text/javascript" src="/Rservas.Roma/utils/servicios.js?v=202402261530"></script>
-    <script type="text/javascript" src="/Rservas.Roma/utils/barberos.js?v=202402261530"></script>
+    <script type="text/javascript" src="/Rservas.Roma/utils/profesionales.js?v=202402261530"></script>
     <script type="text/javascript" src="/Rservas.Roma/utils/whatsapp-helper.js?v=202402261530"></script>
 
     <script type="text/javascript">
@@ -118,7 +118,7 @@
         console.log(' ✅ auth-clientes:', typeof window.verificarAccesoCliente);
         console.log(' ✅ salonConfig:', typeof window.salonConfig);
         console.log(' ✅ salonServicios:', typeof window.salonServicios);
-        console.log(' ✅ salonBarberos:', typeof window.salonBarberos);
+        console.log(' ✅ salonProfesionales:', typeof window.salonProfesionales);
         console.log(' ✅ storage:', typeof window.subirImagenServicio);
     </script>
 
@@ -139,9 +139,6 @@
 
     <!-- Sistema de actualizaciones robusto -->
     <script>
-        // ============================================
-        // DETECCIÓN DE NUEVAS VERSIONES
-        // ============================================
         let swRegistration = null;
         let updateNotificationShown = false;
         let updateBanner = null;
@@ -199,17 +196,13 @@
                         console.log('✅ Service Worker registrado');
 
                         if (registration.waiting) {
-                            console.log('🔄 Nueva versión detectada al inicio');
                             showUpdateNotification();
                         }
 
                         registration.addEventListener('updatefound', () => {
                             const newWorker = registration.installing;
-                            console.log('🔄 Nueva versión detectada');
-
                             newWorker.addEventListener('statechange', () => {
                                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                    console.log('✅ Nueva versión lista para instalar');
                                     showUpdateNotification();
                                 }
                             });
@@ -227,15 +220,11 @@
 
             setInterval(() => {
                 if (swRegistration) {
-                    console.log('🔄 Verificando actualizaciones...');
                     swRegistration.update();
                 }
             }, 30 * 60 * 1000);
         }
 
-        // ============================================
-        // INSTALACIÓN DE LA APP (PWA)
-        // ============================================
         let deferredPrompt;
         const installButton = document.getElementById('install-button');
         const installContainer = document.getElementById('install-button-container');
@@ -274,12 +263,12 @@
         }
     </script>
 
-    <!-- Botón de instalación de la app (oculto por defecto) -->
+    <!-- Botón de instalación -->
     <div id="install-button-container" class="fixed bottom-6 left-6 z-50 hidden">
-        <button id="install-button" class="bg-gradient-to-r from-amber-600 to-amber-700 text-white px-6 py-3 rounded-full shadow-lg hover:from-amber-700 hover:to-amber-800 transition-all transform hover:scale-105 flex items-center gap-2 border border-amber-400">
+        <button id="install-button" class="bg-gradient-to-r from-pink-600 to-pink-700 text-white px-6 py-3 rounded-full shadow-lg hover:from-pink-700 hover:to-pink-800 transition-all transform hover:scale-105 flex items-center gap-2 border border-pink-400">
             <span class="icon-download text-xl"></span>
             <span class="font-semibold">Instalar App</span>
-            <span class="text-xs bg-amber-500 px-2 py-1 rounded-full animate-pulse">NUEVO</span>
+            <span class="text-xs bg-pink-500 px-2 py-1 rounded-full animate-pulse">NUEVO</span>
         </button>
     </div>
 </body>

@@ -1,4 +1,4 @@
-// components/ClientAuthScreen.js - VERSIÓN CON IMAGEN DE FONDO Y NOTIFICACIONES CORREGIDAS
+// components/ClientAuthScreen.js - Versión femenina para salón de belleza
 
 function ClientAuthScreen({ onAccessGranted, onGoBack }) {
     const [nombre, setNombre] = React.useState('');
@@ -9,15 +9,15 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
     const [verificando, setVerificando] = React.useState(false);
     const [yaTieneSolicitud, setYaTieneSolicitud] = React.useState(false);
     const [estadoRechazado, setEstadoRechazado] = React.useState(false);
-    const [esBarbero, setEsBarbero] = React.useState(false);
-    const [barberoInfo, setBarberoInfo] = React.useState(null);
+    const [esProfesional, setEsProfesional] = React.useState(false);
+    const [profesionalInfo, setProfesionalInfo] = React.useState(null);
     const [esDuenno, setEsDuenno] = React.useState(false);
     const [imagenCargada, setImagenCargada] = React.useState(false);
 
     // Cargar imagen de fondo
     React.useEffect(() => {
         const img = new Image();
-        img.src = '/LAG-barberia/images/LAG.barberia.jpg';
+        img.src = '/Rservas.Roma/images/salon-belleza.jpg';
         img.onload = () => {
             console.log('✅ Imagen cargada correctamente');
             setImagenCargada(true);
@@ -53,8 +53,8 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             setClienteAutorizado(null);
             setYaTieneSolicitud(false);
             setEstadoRechazado(false);
-            setEsBarbero(false);
-            setBarberoInfo(null);
+            setEsProfesional(false);
+            setProfesionalInfo(null);
             setEsDuenno(false);
             setError('');
             return;
@@ -66,24 +66,36 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
         const numeroCompleto = `53${numeroLimpio}`;
         
         try {
+            // Verificar si es la dueña
             if (numeroLimpio === '53357234') {
                 setEsDuenno(true);
-                setEsBarbero(false);
-                setBarberoInfo(null);
+                setEsProfesional(false);
+                setProfesionalInfo(null);
                 setClienteAutorizado(null);
-                setError('👑 Acceso como dueño detectado');
+                setError('👑 Acceso como dueña detectado');
                 setVerificando(false);
                 return;
             }
             
-            if (window.verificarBarberoPorTelefono) {
-                const barbero = await window.verificarBarberoPorTelefono(numeroLimpio);
-                if (barbero) {
-                    setEsBarbero(true);
-                    setBarberoInfo(barbero);
+            // Verificar si es profesional
+            const response = await fetch(
+                `${window.SUPABASE_URL}/rest/v1/profesionales?telefono=eq.${numeroLimpio}&activo=eq.true&select=id,nombre,telefono,nivel`,
+                {
+                    headers: {
+                        'apikey': window.SUPABASE_ANON_KEY,
+                        'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
+                    }
+                }
+            );
+            
+            if (response.ok) {
+                const profesionales = await response.json();
+                if (profesionales && profesionales.length > 0) {
+                    setEsProfesional(true);
+                    setProfesionalInfo(profesionales[0]);
                     setEsDuenno(false);
                     setClienteAutorizado(null);
-                    setError('👨‍🎨 Acceso como barbero detectado');
+                    setError('💅 Acceso como profesional detectado');
                     setVerificando(false);
                     return;
                 }
@@ -93,7 +105,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             if (yaExiste) {
                 const pendiente = await window.isClientePendiente?.(numeroCompleto);
                 if (pendiente) {
-                    setError('Ya tenés una solicitud pendiente. El dueño te contactará pronto.');
+                    setError('Ya tenés una solicitud pendiente. La dueña te contactará pronto.');
                 } else {
                     setError('Este número ya fue registrado anteriormente.');
                 }
@@ -102,8 +114,8 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             }
             
             setEsDuenno(false);
-            setEsBarbero(false);
-            setBarberoInfo(null);
+            setEsProfesional(false);
+            setProfesionalInfo(null);
             
             const existe = await window.verificarAccesoCliente(numeroCompleto);
             
@@ -156,7 +168,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             return;
         }
         
-        if (esDuenno || esBarbero) {
+        if (esDuenno || esProfesional) {
             return;
         }
         
@@ -191,28 +203,22 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                 setSolicitudEnviada(true);
                 setError('');
                 
-                // 🔥 ENVIAR NOTIFICACIÓN AL DUEÑO POR NTFY (VERSIÓN CORREGIDA)
+                // Enviar notificación a ntfy
                 try {
-                    // Eliminar caracteres especiales y emojis del mensaje
-                    const mensajeLimpio = `NUEVA SOLICITUD DE ACCESO\n\nNombre: ${nombre}\nWhatsApp: +${whatsapp}`;
+                    const mensajeLimpio = `NUEVA SOLICITUD\n\nNombre: ${nombre}\nWhatsApp: +${whatsapp}`;
                     
-                    // Título sin emojis
-                    const tituloLimpio = 'Solicitud pendiente - LAG.barberia';
-                    
-                    fetch('https://ntfy.sh/lag-barberia', {
+                    fetch('https://ntfy.sh/rservas-roma', {
                         method: 'POST',
                         body: mensajeLimpio,
                         headers: {
-                            'Title': tituloLimpio,
+                            'Title': '💅 Nueva clienta - Rservas.Roma',
                             'Priority': 'default',
-                            'Tags': 'tada'
+                            'Tags': 'sparkles'
                         }
                     })
                     .then(response => {
                         if (response.ok) {
-                            console.log('✅ Notificación enviada a ntfy');
-                        } else {
-                            console.error('❌ Error en respuesta:', response.status);
+                            console.log('✅ Notificación enviada');
                         }
                     })
                     .catch(error => {
@@ -245,11 +251,11 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                 {/* Imagen de fondo */}
                 <div className="absolute inset-0 z-0">
                     {!imagenCargada && (
-                        <div className="w-full h-full bg-gradient-to-br from-amber-900 to-gray-900 animate-pulse"></div>
+                        <div className="w-full h-full bg-gradient-to-br from-pink-900 to-purple-900 animate-pulse"></div>
                     )}
                     <img 
-                        src="/LAG-barberia/images/LAG.barberia.jpg"
-                        alt="Barbería LAG.barberia" 
+                        src="/Rservas.Roma/images/salon-belleza.jpg"
+                        alt="Salón de belleza" 
                         className={`w-full h-full object-cover transition-opacity duration-500 ${imagenCargada ? 'opacity-100' : 'opacity-0'}`}
                     />
                     <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/70 to-transparent"></div>
@@ -268,39 +274,39 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                 
                 {/* Contenido */}
                 <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6">
-                    <div className="w-24 h-24 bg-green-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-2xl">
-                        <div className="icon-check text-5xl text-white"></div>
+                    <div className="w-24 h-24 bg-pink-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-2xl">
+                        <i className="icon-check text-5xl text-white"></i>
                     </div>
                     
                     <h2 className="text-2xl font-bold text-white mb-3 text-center">¡Solicitud Enviada!</h2>
                     
-                    <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl shadow-2xl max-w-md mb-6 border border-amber-500/30 w-full">
+                    <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl shadow-2xl max-w-md mb-6 border border-pink-500/30 w-full">
                         <p className="text-gray-200 mb-4 text-center">
-                            Gracias por querer ser parte de <span className="font-bold text-amber-400">LAG.barberia</span>
+                            Gracias por querer ser parte de <span className="font-bold text-pink-400">Rservas.Roma</span>
                         </p>
                         
-                        <div className="bg-black/40 p-4 rounded-xl text-left space-y-2 mb-4 border border-amber-500/20">
+                        <div className="bg-black/40 p-4 rounded-xl text-left space-y-2 mb-4 border border-pink-500/20">
                             <p className="text-sm text-gray-300">
-                                <span className="font-semibold text-amber-400">📱 Tu número:</span> +{whatsapp}
+                                <span className="font-semibold text-pink-400">📱 Tu número:</span> +{whatsapp}
                             </p>
                             <p className="text-sm text-gray-300">
-                                <span className="font-semibold text-amber-400">👤 Nombre:</span> {nombre}
+                                <span className="font-semibold text-pink-400">👤 Nombre:</span> {nombre}
                             </p>
                         </div>
                         
                         <p className="text-gray-300 text-sm text-center">
-                            El dueño revisará tu solicitud y te contactará por WhatsApp.
+                            La dueña revisará tu solicitud y te contactará por WhatsApp.
                         </p>
                     </div>
                     
                     <div className="text-sm text-gray-400 text-center">
-                        <p>Mientras tanto, puede contactarnos:</p>
+                        <p>Mientras tanto, podés contactarnos:</p>
                         <a 
-                            href="https://api.whatsapp.com/send?phone=53357234&text=Hola%20LAG.barberia%2C%20consulté%20mi%20solicitud%20de%20acceso" 
+                            href="https://api.whatsapp.com/send?phone=53357234&text=Hola%20Rservas.Roma%2C%20consulté%20mi%20solicitud%20de%20acceso" 
                             target="_blank" 
-                            className="text-amber-400 font-medium inline-flex items-center gap-1 mt-2 hover:text-amber-300 transition-colors"
+                            className="text-pink-400 font-medium inline-flex items-center gap-1 mt-2 hover:text-pink-300 transition-colors"
                         >
-                            <div className="icon-message-circle"></div>
+                            <i className="icon-message-circle"></i>
                             +53 53357234
                         </a>
                     </div>
@@ -314,11 +320,11 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             {/* Imagen de fondo */}
             <div className="absolute inset-0 z-0">
                 {!imagenCargada && (
-                    <div className="w-full h-full bg-gradient-to-br from-amber-900 to-gray-900 animate-pulse"></div>
+                    <div className="w-full h-full bg-gradient-to-br from-pink-900 to-purple-900 animate-pulse"></div>
                 )}
                 <img 
-                    src="/LAG-barberia/images/LAG.barberia.jpg"
-                    alt="Barbería LAG.barberia" 
+                    src="/Rservas.Roma/images/salon-belleza.jpg"
+                    alt="Salón de belleza" 
                     className={`w-full h-full object-cover transition-opacity duration-500 ${imagenCargada ? 'opacity-100' : 'opacity-0'}`}
                 />
                 <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-black/90 via-black/70 to-transparent"></div>
@@ -338,15 +344,15 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
             {/* Contenido */}
             <div className="relative z-10 flex flex-col justify-end min-h-screen p-6 pb-12">
                 <div className="max-w-md w-full mx-auto">
-                    {/* Título oculto (solo para estructura) */}
-                    <div className="text-center mb-4 opacity-0 h-0">
-                        <h1 className="text-4xl font-bold text-white">LAG.barberia</h1>
-                        <p className="text-gray-200 text-lg">Acceso para clientes y barberos</p>
+                    {/* Título */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-4xl font-bold text-white mb-2">Rservas.Roma</h1>
+                        <p className="text-pink-300">Turnos para salones de belleza</p>
                     </div>
 
-                    {/* Tabla de acceso */}
-                    <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-amber-500/30">
-                        <h2 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
+                    {/* Formulario de acceso */}
+                    <div className="bg-black/60 backdrop-blur-md p-6 rounded-2xl shadow-2xl border border-pink-500/30">
+                        <h2 className="text-lg font-semibold text-pink-400 mb-4 flex items-center gap-2">
                             <i className="icon-user-plus"></i>
                             Ingresá con tu número
                         </h2>
@@ -361,12 +367,12 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                     value={nombre}
                                     onChange={(e) => setNombre(e.target.value)}
                                     className={`w-full px-4 py-3 rounded-lg border ${
-                                        esDuenno || esBarbero 
+                                        esDuenno || esProfesional 
                                             ? 'bg-gray-800/50 border-gray-600 text-gray-400 cursor-not-allowed' 
-                                            : 'bg-gray-800/50 border-gray-600 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 backdrop-blur-sm'
+                                            : 'bg-gray-800/50 border-gray-600 text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 backdrop-blur-sm'
                                     } outline-none transition`}
-                                    placeholder="Ej: Juan Pérez"
-                                    disabled={esDuenno || esBarbero}
+                                    placeholder="Ej: María González"
+                                    disabled={esDuenno || esProfesional}
                                 />
                             </div>
 
@@ -386,7 +392,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                             setWhatsapp(value);
                                             verificarNumero(value);
                                         }}
-                                        className="w-full px-4 py-3 rounded-r-lg border border-gray-600 bg-gray-800/50 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition backdrop-blur-sm"
+                                        className="w-full px-4 py-3 rounded-r-lg border border-gray-600 bg-gray-800/50 text-white focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition backdrop-blur-sm"
                                         placeholder="Ej: 51234567"
                                         required
                                     />
@@ -395,23 +401,23 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                             </div>
 
                             {verificando && (
-                                <div className="text-amber-400 text-sm bg-black/40 backdrop-blur-sm p-2 rounded-lg flex items-center gap-2 border border-amber-500/30">
-                                    <div className="animate-spin h-4 w-4 border-2 border-amber-500 border-t-transparent rounded-full"></div>
+                                <div className="text-pink-400 text-sm bg-black/40 backdrop-blur-sm p-2 rounded-lg flex items-center gap-2 border border-pink-500/30">
+                                    <div className="animate-spin h-4 w-4 border-2 border-pink-500 border-t-transparent rounded-full"></div>
                                     Verificando...
                                 </div>
                             )}
 
                             {esDuenno && !verificando && (
-                                <div className="bg-gradient-to-r from-amber-900/80 to-amber-800/80 backdrop-blur-sm border-2 border-amber-500 rounded-lg p-4">
+                                <div className="bg-gradient-to-r from-pink-900/80 to-purple-800/80 backdrop-blur-sm border-2 border-pink-500 rounded-lg p-4">
                                     <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                                        <div className="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
                                             D
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-amber-300 font-bold text-xl">
-                                                ¡Bienvenido Dueño!
+                                            <p className="text-pink-300 font-bold text-xl">
+                                                ¡Bienvenida Dueña!
                                             </p>
-                                            <p className="text-amber-400 text-sm">
+                                            <p className="text-pink-400 text-sm">
                                                 Hacé clic en el botón de abajo para acceder al panel.
                                             </p>
                                         </div>
@@ -419,17 +425,17 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                 </div>
                             )}
 
-                            {esBarbero && barberoInfo && !verificando && (
-                                <div className="bg-gradient-to-r from-amber-900/80 to-amber-800/80 backdrop-blur-sm border-2 border-amber-500 rounded-lg p-4">
+                            {esProfesional && profesionalInfo && !verificando && (
+                                <div className="bg-gradient-to-r from-pink-900/80 to-purple-800/80 backdrop-blur-sm border-2 border-pink-500 rounded-lg p-4">
                                     <div className="flex items-start gap-3">
-                                        <div className="w-12 h-12 bg-amber-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                                            B
+                                        <div className="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                                            P
                                         </div>
                                         <div className="flex-1">
-                                            <p className="text-amber-300 font-bold text-xl">
-                                                ¡Hola {barberoInfo.nombre}!
+                                            <p className="text-pink-300 font-bold text-xl">
+                                                ¡Hola {profesionalInfo.nombre}!
                                             </p>
-                                            <p className="text-amber-400 text-sm">
+                                            <p className="text-pink-400 text-sm">
                                                 Hacé clic en el botón de abajo para acceder a tu panel.
                                             </p>
                                         </div>
@@ -437,7 +443,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                 </div>
                             )}
 
-                            {clienteAutorizado && !verificando && !esDuenno && !esBarbero && (
+                            {clienteAutorizado && !verificando && !esDuenno && !esProfesional && (
                                 <div className="bg-gradient-to-r from-green-900/80 to-green-800/80 backdrop-blur-sm border-2 border-green-500 rounded-lg p-4">
                                     <div className="flex items-start gap-3">
                                         <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-2xl font-bold text-white">
@@ -455,7 +461,7 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                 </div>
                             )}
 
-                            {error && !esDuenno && !esBarbero && (
+                            {error && !esDuenno && !esProfesional && (
                                 <div className={`text-sm p-3 rounded-lg flex items-start gap-2 backdrop-blur-sm ${
                                     estadoRechazado 
                                         ? 'bg-yellow-900/80 text-yellow-300 border border-yellow-700' 
@@ -472,37 +478,37 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                         type="button"
                                         onClick={() => {
                                             localStorage.setItem('adminAuth', 'true');
-                                            localStorage.setItem('adminUser', 'Dueño');
+                                            localStorage.setItem('adminUser', 'Dueña');
                                             localStorage.setItem('adminLoginTime', Date.now());
                                             window.location.href = 'admin.html';
                                         }}
-                                        className="w-full bg-gradient-to-r from-amber-600 to-yellow-600 text-white py-4 rounded-xl font-bold hover:from-amber-700 hover:to-yellow-700 transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg text-lg"
+                                        className="w-full bg-gradient-to-r from-pink-600 to-purple-600 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-purple-700 transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg text-lg"
                                     >
-                                        <span className="text-xl">⚡</span>
-                                        Ingresar como Dueño
+                                        <span className="text-xl">👑</span>
+                                        Ingresar como Dueña
                                     </button>
                                 )}
 
-                                {esBarbero && barberoInfo && !verificando && (
+                                {esProfesional && profesionalInfo && !verificando && (
                                     <button
                                         type="button"
                                         onClick={() => {
-                                            localStorage.setItem('barberoAuth', JSON.stringify({
-                                                id: barberoInfo.id,
-                                                nombre: barberoInfo.nombre,
-                                                telefono: barberoInfo.telefono,
-                                                nivel: barberoInfo.nivel || 1
+                                            localStorage.setItem('profesionalAuth', JSON.stringify({
+                                                id: profesionalInfo.id,
+                                                nombre: profesionalInfo.nombre,
+                                                telefono: profesionalInfo.telefono,
+                                                nivel: profesionalInfo.nivel || 1
                                             }));
                                             window.location.href = 'admin.html';
                                         }}
-                                        className="w-full bg-gradient-to-r from-amber-700 to-amber-800 text-white py-4 rounded-xl font-bold hover:from-amber-800 hover:to-amber-900 transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg text-lg"
+                                        className="w-full bg-gradient-to-r from-pink-700 to-purple-700 text-white py-4 rounded-xl font-bold hover:from-pink-800 hover:to-purple-800 transition transform hover:scale-105 flex items-center justify-center gap-2 shadow-lg text-lg"
                                     >
-                                        <span className="text-xl">✂️</span>
-                                        Ingresar como Barbero
+                                        <span className="text-xl">💅</span>
+                                        Ingresar como Profesional
                                     </button>
                                 )}
 
-                                {clienteAutorizado && !verificando && !esDuenno && !esBarbero && (
+                                {clienteAutorizado && !verificando && !esDuenno && !esProfesional && (
                                     <button
                                         type="button"
                                         onClick={handleAccesoDirecto}
@@ -513,14 +519,14 @@ function ClientAuthScreen({ onAccessGranted, onGoBack }) {
                                     </button>
                                 )}
 
-                                {!clienteAutorizado && !esDuenno && !esBarbero && !verificando && (
+                                {!clienteAutorizado && !esDuenno && !esProfesional && !verificando && (
                                     <button
                                         type="submit"
                                         disabled={verificando || (yaTieneSolicitud && !estadoRechazado)}
-                                        className="w-full bg-gradient-to-r from-amber-600 to-amber-700 text-white py-4 rounded-xl font-bold hover:from-amber-700 hover:to-amber-800 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg"
+                                        className="w-full bg-gradient-to-r from-pink-600 to-pink-700 text-white py-4 rounded-xl font-bold hover:from-pink-700 hover:to-pink-800 transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg text-lg"
                                     >
-                                        <span className="text-xl">📱</span>
-                                        {verificando ? 'Verificando...' : 'Solicitar Acceso como Cliente'}
+                                        <span className="text-xl">💅</span>
+                                        {verificando ? 'Verificando...' : 'Solicitar Acceso'}
                                     </button>
                                 )}
                             </div>

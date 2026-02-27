@@ -1,6 +1,6 @@
-// utils/servicios.js - Gestión de servicios CON SUPABASE (PRECIO ÚNICO)
+// utils/servicios.js - Gestión de servicios para salón de belleza
 
-console.log('💅 servicios.js cargado (modo Supabase)');
+console.log('💅 servicios.js cargado');
 
 let serviciosCache = [];
 let ultimaActualizacionServicios = 0;
@@ -15,7 +15,6 @@ async function cargarServiciosDesdeDB() {
                 headers: {
                     'apikey': window.SUPABASE_ANON_KEY,
                     'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                    'Content-Type': 'application/json'
                 }
             }
         );
@@ -53,7 +52,6 @@ window.salonServicios = {
             return datos;
         }
         
-        // Fallback a datos por defecto (solo por si acaso)
         return [];
     },
     
@@ -65,7 +63,6 @@ window.salonServicios = {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
@@ -78,7 +75,6 @@ window.salonServicios = {
         }
     },
     
-    // 🔥 CREAR con precio único
     crear: async function(servicio) {
         try {
             console.log('➕ Creando servicio:', servicio);
@@ -97,6 +93,7 @@ window.salonServicios = {
                         duracion: servicio.duracion,
                         precio: servicio.precio,
                         descripcion: servicio.descripcion || '',
+                        categoria: servicio.categoria || 'Uñas',
                         activo: true,
                         imagen: servicio.imagen || null
                     })
@@ -125,17 +122,16 @@ window.salonServicios = {
         }
     },
     
-    // 🔥 ACTUALIZAR con precio único
     actualizar: async function(id, cambios) {
         try {
             console.log('✏️ Actualizando servicio', id, 'con:', cambios);
             
-            // Construir objeto con los campos a actualizar
             const datosActualizar = {};
             if (cambios.nombre !== undefined) datosActualizar.nombre = cambios.nombre;
             if (cambios.duracion !== undefined) datosActualizar.duracion = cambios.duracion;
             if (cambios.precio !== undefined) datosActualizar.precio = cambios.precio;
             if (cambios.descripcion !== undefined) datosActualizar.descripcion = cambios.descripcion;
+            if (cambios.categoria !== undefined) datosActualizar.categoria = cambios.categoria;
             if (cambios.activo !== undefined) datosActualizar.activo = cambios.activo;
             if (cambios.imagen !== undefined) datosActualizar.imagen = cambios.imagen;
             
@@ -185,7 +181,6 @@ window.salonServicios = {
                     headers: {
                         'apikey': window.SUPABASE_ANON_KEY,
                         'Authorization': `Bearer ${window.SUPABASE_ANON_KEY}`,
-                        'Content-Type': 'application/json'
                     }
                 }
             );
