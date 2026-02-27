@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Rservas.Roma</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://resource.trickle.so/vendor_lib/unpkg/lucide-static@0.516.0/font/lucide.css" rel="stylesheet">
     <style>
         @keyframes fadeIn {
@@ -22,9 +23,9 @@
     <script>
         (function() {
             const isAdmin = localStorage.getItem('adminAuth') === 'true';
-            const barberoAuth = localStorage.getItem('barberoAuth');
+            const profesionalAuth = localStorage.getItem('profesionalAuth');
             
-            if (isAdmin || barberoAuth) {
+            if (isAdmin || profesionalAuth) {
                 console.log('🔐 Sesión activa detectada, redirigiendo a admin.html');
                 window.location.replace('admin.html');
             }
@@ -54,11 +55,10 @@
         
         <form id="loginForm" class="space-y-6">
             <div>
-                <label class="block text-sm font-medium text-amber-400 mb-2">Usuario / Teléfono</label>
-                <input type="text" id="username" required
+                <label class="block text-sm font-medium text-amber-400 mb-2">Email</label>
+                <input type="email" id="username" required
                        class="w-full px-4 py-3 rounded-lg border border-gray-600 bg-gray-700 text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500 outline-none transition"
-                       placeholder="LAG.barberia o 53357234">
-                <p class="text-xs text-gray-400 mt-1">Dueño: LAG.barberia | Barberos: usá tu teléfono</p>
+                       placeholder="tuduenna@email.com">
             </div>
             
             <div>
@@ -75,16 +75,11 @@
         </form>
         
         <div id="errorMsg" class="mt-4 text-red-500 text-sm text-center hidden"></div>
-        
-        <!-- Leyenda -->
-        <div class="mt-6 text-center text-xs text-gray-400">
-            <p><span class="font-bold text-amber-400">Dueño:</span> usuario <strong>LAG.barberia</strong> | contraseña <strong>lag2026</strong></p>
-            <p class="mt-1"><span class="font-bold text-amber-400">Barberos:</span> usá tu teléfono</p>
-        </div>
     </div>
 
     <!-- Scripts con rutas relativas y timestamp -->
-    <script type="text/javascript" src="utils/config.js?v=202402261532"></script>
+    <script type="text/javascript" src="utils/supabase-config.js?v=202402261533"></script>
+    <script type="text/javascript" src="utils/config.js?v=202402261533"></script>
     <script type="text/javascript" src="utils/storage.js?v=202402261530"></script>
 
     <script type="text/javascript">
@@ -105,9 +100,8 @@
     <script type="text/javascript" src="utils/timeLogic.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/auth-clients.js?v=202402261530"></script>
     <script type="text/javascript" src="utils/auth-barberos.js?v=202402261530"></script>
-    <script type="text/javascript" src="utils/config.js?v=202402261532"></script>
     <script type="text/javascript" src="utils/servicios.js?v=202402261530"></script>
-   <script type="text/javascript" src="utils/profesionales.js?v=202402261530"></script>
+    <script type="text/javascript" src="utils/profesionales.js?v=202402261530"></script>
 
     <script type="text/javascript">
         console.log('🔍 VERIFICACIÓN DE CARGA LOGIN:');
@@ -118,17 +112,19 @@
         console.log(' ✅ loginBarbero:', typeof window.loginBarbero);
         console.log(' ✅ salonConfig:', typeof window.salonConfig);
         console.log(' ✅ salonServicios:', typeof window.salonServicios);
-        console.log(' ✅ salonBarberos:', typeof window.salonBarberos);
+        console.log(' ✅ salonProfesionales:', typeof window.salonProfesionales);
     </script>
 
     <script>
-        const ADMIN_USERNAME = 'LAG.barberia';
-        const ADMIN_PASSWORD = 'lag2026';
+        const supabase = window.supabase.createClient(
+            window.SUPABASE_URL,
+            window.SUPABASE_ANON_KEY
+        );
         
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
             const errorMsg = document.getElementById('errorMsg');
             const mensaje = document.getElementById('mensaje');
@@ -141,66 +137,28 @@
             mensaje.classList.add('text-amber-400', 'bg-gray-700', 'p-2', 'rounded-lg');
             
             try {
-                console.log('🔐 Intentando login con:', { username, password: '***' });
-                console.log('🔐 SUPABASE_URL en login:', window.SUPABASE_URL);
+                console.log('🔐 Intentando login con Supabase Auth:', email);
                 
-                if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-                    console.log('✅ Login exitoso como dueño');
-                    
-                    localStorage.setItem('adminAuth', 'true');
-                    localStorage.setItem('adminUser', username);
-                    localStorage.setItem('adminLoginTime', Date.now());
-                    localStorage.setItem('userRole', 'admin');
-                    
-                    localStorage.removeItem('barberoAuth');
-                    
-                    mensaje.classList.add('hidden');
-                    window.location.href = 'admin.html';
-                    return;
-                }
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) throw error;
+
+                console.log('✅ Login exitoso:', data);
                 
-                if (/^\d+$/.test(username)) {
-                    console.log('🔍 Intentando login como barbero:', username);
-                    
-                    if (typeof window.loginBarbero !== 'function') {
-                        console.error('❌ loginBarbero no está disponible');
-                        errorMsg.textContent = 'Error: Sistema de autenticación no disponible';
-                        errorMsg.classList.remove('hidden');
-                        mensaje.classList.add('hidden');
-                        return;
-                    }
-                    
-                    const barbero = await window.loginBarbero(username, password);
-                    
-                    if (barbero) {
-                        console.log('✅ Login exitoso como barbero:', barbero.nombre);
-                        
-                        localStorage.setItem('barberoAuth', JSON.stringify({
-                            id: barbero.id,
-                            nombre: barbero.nombre,
-                            telefono: barbero.telefono,
-                            nivel: barbero.nivel || 1
-                        }));
-                        localStorage.setItem('userRole', 'barbero');
-                        
-                        localStorage.removeItem('adminAuth');
-                        localStorage.removeItem('adminUser');
-                        
-                        mensaje.classList.add('hidden');
-                        window.location.href = 'admin.html';
-                        return;
-                    } else {
-                        console.log('❌ Login falló - credenciales incorrectas');
-                    }
-                }
+                localStorage.setItem('adminAuth', 'true');
+                localStorage.setItem('adminUser', email);
+                localStorage.setItem('adminLoginTime', Date.now());
+                localStorage.setItem('userRole', 'admin');
                 
-                errorMsg.textContent = 'Usuario o contraseña incorrectos';
-                errorMsg.classList.remove('hidden');
                 mensaje.classList.add('hidden');
+                window.location.href = 'admin.html';
                 
             } catch (error) {
                 console.error('❌ Error en login:', error);
-                errorMsg.textContent = 'Error al conectar. Intentá de nuevo.';
+                errorMsg.textContent = 'Email o contraseña incorrectos';
                 errorMsg.classList.remove('hidden');
                 mensaje.classList.add('hidden');
             }
