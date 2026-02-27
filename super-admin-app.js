@@ -1,8 +1,8 @@
 // super-admin-app.js
 
 window.supabase = window.supabase.createClient(
-  window.SUPABASE_URL,
-  window.SUPABASE_ANON_KEY
+    window.SUPABASE_URL,
+    window.SUPABASE_ANON_KEY
 );
 
 const SUPER_ADMIN_EMAIL = 'rservasroma@gmail.com';
@@ -21,7 +21,7 @@ function SuperAdminApp() {
 
     const verificarSuperAdmin = async () => {
         try {
-            const { data: { user }, error } = await supabase.auth.getUser();
+            const { data: { user }, error } = await window.supabase.auth.getUser();
             
             if (error) throw error;
             
@@ -43,7 +43,7 @@ function SuperAdminApp() {
     const cargarNegocios = async () => {
         setCargando(true);
         try {
-            const { data, error } = await supabase
+            const { data, error } = await window.supabase
                 .from('vista_negocios_admin')
                 .select('*')
                 .order('fecha_registro', { ascending: false });
@@ -73,6 +73,7 @@ function SuperAdminApp() {
     });
 
     const verDetalle = (negocio) => {
+        console.log('🔍 Ver detalle de:', negocio); // ✅ Debug
         setNegocioSeleccionado(negocio);
         setMostrarDetalle(true);
     };
