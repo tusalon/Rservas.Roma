@@ -15,7 +15,7 @@ function SuperAdminApp() {
     const [mostrarDetalle, setMostrarDetalle] = React.useState(false);
     const [filtro, setFiltro] = React.useState('todos');
     const [verificado, setVerificado] = React.useState(false);
-    const [version, setVersion] = React.useState(0); // 🔥 Para forzar actualización
+    const [version, setVersion] = React.useState(0);
 
     React.useEffect(() => {
         verificarSuperAdmin();
@@ -23,15 +23,17 @@ function SuperAdminApp() {
 
     // Actualizar filtros cuando cambien negocios o filtro
     React.useEffect(() => {
-        const filtrados = negocios.filter(neg => {
-            if (filtro === 'todos') return true;
-            if (filtro === 'activos') return neg.estado_suscripcion === 'activa';
-            if (filtro === 'trial') return neg.estado_suscripcion === 'trial';
-            if (filtro === 'suspendidos') return neg.estado_suscripcion === 'suspendida';
-            return true;
-        });
-        setNegociosFiltrados(filtrados);
-        console.log('📊 Filtrados:', filtrados.length, 'negocios');
+        if (negocios.length > 0) {
+            const filtrados = negocios.filter(neg => {
+                if (filtro === 'todos') return true;
+                if (filtro === 'activos') return neg.estado_suscripcion === 'activa';
+                if (filtro === 'trial') return neg.estado_suscripcion === 'trial';
+                if (filtro === 'suspendidos') return neg.estado_suscripcion === 'suspendida';
+                return true;
+            });
+            setNegociosFiltrados(filtrados);
+            console.log('📊 Filtrados:', filtrados.length, 'negocios');
+        }
     }, [negocios, filtro]);
 
     const verificarSuperAdmin = async () => {
@@ -47,7 +49,7 @@ function SuperAdminApp() {
             }
             
             setVerificado(true);
-            cargarNegocios();
+            await cargarNegocios(); // ← AHORA ESPERA A QUE TERMINE
         } catch (error) {
             console.error('Error verificando usuario:', error);
             alert('Error al verificar usuario');
@@ -72,9 +74,9 @@ function SuperAdminApp() {
             );
             
             setNegocios([...unicos]);
-            setVersion(v => v + 1); // 🔥 FORZAR ACTUALIZACIÓN
+            setVersion(v => v + 1);
             
-            console.log('✅ Negocios cargados:', unicos);
+            console.log('✅ Negocios cargados:', unicos.length);
         } catch (error) {
             console.error('Error cargando negocios:', error);
             alert('Error al cargar los negocios: ' + error.message);
@@ -194,7 +196,7 @@ function SuperAdminApp() {
                         <div className="space-y-3">
                             {negociosFiltrados.map((negocio, index) => (
                                 <div
-                                    key={`${negocio.id}-${version}-${index}`} // 🔥 KEY QUE CAMBIA CON CADA ACTUALIZACIÓN
+                                    key={`${negocio.id}-${version}-${index}`}
                                     className="border rounded-lg p-4 hover:shadow-md transition cursor-pointer"
                                     onClick={() => verDetalle(negocio)}
                                 >
