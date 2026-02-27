@@ -1,4 +1,4 @@
-// super-admin-app.js - VERSIÓN CORREGIDA
+// super-admin-app.js - VERSIÓN CON MODAL DE DETALLE
 
 console.log('🔥 super-admin-app.js CARGADO');
 
@@ -10,6 +10,8 @@ window.supabase = window.supabase.createClient(
 function SuperAdminApp() {
     const [negocios, setNegocios] = React.useState([]);
     const [cargando, setCargando] = React.useState(true);
+    const [negocioSeleccionado, setNegocioSeleccionado] = React.useState(null);
+    const [mostrarDetalle, setMostrarDetalle] = React.useState(false);
 
     React.useEffect(() => {
         cargarNegocios();
@@ -39,6 +41,12 @@ function SuperAdminApp() {
         }
     };
 
+    const verDetalle = (negocio) => {
+        console.log('🔍 Ver detalle de:', negocio.nombre);
+        setNegocioSeleccionado(negocio);
+        setMostrarDetalle(true);
+    };
+
     if (cargando) {
         return React.createElement('div', { className: 'text-center p-6' },
             React.createElement('div', { className: 'animate-spin rounded-full h-12 w-12 border-b-2 border-pink-600 mx-auto' }),
@@ -57,9 +65,10 @@ function SuperAdminApp() {
             negocios.map(neg => 
                 React.createElement('div', {
                     key: neg.id,
-                    className: 'bg-white p-4 rounded-lg shadow border'
+                    className: 'bg-white p-4 rounded-lg shadow border cursor-pointer hover:shadow-md transition',
+                    onClick: () => verDetalle(neg)
                 },
-                    React.createElement('div', { className: 'flex justify-between' },
+                    React.createElement('div', { className: 'flex justify-between items-start' },
                         React.createElement('div', null,
                             React.createElement('h3', { className: 'font-bold text-lg' }, neg.nombre),
                             React.createElement('p', { className: 'text-sm text-gray-600' }, neg.email),
@@ -102,7 +111,14 @@ function SuperAdminApp() {
                     )
                 )
             )
-        )
+        ),
+
+        // Modal de detalle
+        mostrarDetalle && negocioSeleccionado && React.createElement(DetalleNegocio, {
+            negocio: negocioSeleccionado,
+            onCerrar: () => setMostrarDetalle(false),
+            onActualizar: cargarNegocios
+        })
     );
 }
 
