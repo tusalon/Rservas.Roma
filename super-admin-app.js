@@ -70,8 +70,10 @@ function SuperAdminApp() {
                 index === self.findIndex(t => t.id === item.id)
             );
             
+            // 🔥 FORZAR NUEVO ARRAY
             setNegocios([...unicos]);
-            console.log('✅ Negocios cargados:', unicos.length);
+            
+            console.log('✅ Negocios cargados:', unicos);
         } catch (error) {
             console.error('Error cargando negocios:', error);
             alert('Error al cargar los negocios: ' + error.message);
