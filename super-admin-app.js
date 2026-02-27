@@ -56,7 +56,9 @@ function SuperAdminApp() {
                 index === self.findIndex(t => t.id === item.id)
             );
             
-            setNegocios(unicos);
+            // 🔥 FORZAR NUEVO ARRAY para que React actualice
+            setNegocios([...unicos]);
+            
             console.log('✅ Negocios cargados:', unicos.length);
         } catch (error) {
             console.error('Error cargando negocios:', error);
